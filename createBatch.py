@@ -28,7 +28,13 @@ image_filenames = [f for f in os.listdir(directory) if f.endswith('.png') and f.
 image_filenames.sort(key=lambda x: int(x.split('_')[1].split('.')[0]))
 
 batch_requests = []
-batch_limit = 2500  # Maximum number of requests per file
+
+
+if args.model == "gpt-4o":
+    batch_limit=2500
+else:
+    batch_limit = 500
+#batch_limit = 2500  # Maximum number of requests per file
 file_count = 0  # Counter for file numbering
 current_batch_count = 0  # Counter for current batch size
 
@@ -76,7 +82,7 @@ for filename in tqdm(image_filenames, desc='Processing images'):
     # Check if the batch limit is reached
     if current_batch_count >= batch_limit:
         # Write the current batch to a file
-        batch_file_path = os.path.join(directory, f"batch_requests_{file_count}.jsonl")
+        batch_file_path = os.path.join(directory, f"batch_requests_{args.model}_{file_count}.jsonl")
         with open(batch_file_path, 'w', encoding='utf-8') as outfile:
             for request in batch_requests:
                 json_line = json.dumps(request)

@@ -8,7 +8,7 @@ import argparse
 import re
 import math
 import matplotlib.gridspec as gridspec
-
+import textwrap
 # Argument parsing to accept multiple directories and labels
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--directories", nargs="+", required=True,
@@ -34,6 +34,9 @@ else:
 # Map each directory to its corresponding label
 dir_label_map = dict(zip(args.directories, args.labels))
 
+
+max_width = 15
+
 # Read in data from multiple directories
 dataframes = []
 for dire in args.directories:
@@ -41,7 +44,7 @@ for dire in args.directories:
     dir_path = "results/"+dire
     # Get list of result files in the directory
 
-    result_files = [f for f in os.listdir(dir_path) if f.endswith('_results.csv')]
+    result_files = [f for f in os.listdir(dir_path) if f.endswith('_results_Cells.csv')]
     if not result_files:
         raise FileNotFoundError(f"No result files found in directory: {dir_path}")
     for result_file in result_files:
@@ -52,7 +55,7 @@ for dire in args.directories:
 
         # Extract the model name from the filename
         # Assuming filenames are like 'gpt4o_results.csv', 'claude_results.csv'
-        model_name = result_file.replace('_results.csv', '')
+        model_name = result_file.replace('_results_Cell.csv', '')
 
         # Check for required columns
         if 'selected_cell' not in df_temp.columns:
@@ -203,7 +206,7 @@ for idx, label_model in enumerate(label_model_pairs):
 
     # Plot the heatmap
     sns.heatmap(pivot_table, annot=True, fmt=".2f", cmap='viridis', ax=ax, vmin=0, vmax=1)
-    ax.set_title(f'Success Rate Heatmap for {label_model}')
+    ax.set_title(f'Success Rate for {label_model}')
     ax.set_xlabel('Column')
     ax.set_ylabel('Row')
 
@@ -255,15 +258,6 @@ accuracy_vs_distractor_df = pd.DataFrame(accuracy_vs_distractor_data)
 # Combine Label and Model for plotting
 accuracy_vs_distractor_df['Label_Model'] = accuracy_vs_distractor_df['Label'] + ' - ' + accuracy_vs_distractor_df['Model']
 
-# Plot accuracy vs number of distractors without error bars per label per model
-g = sns.catplot(
-    x='Number of Distractors (k)', y='Accuracy', hue='Label_Model',
-    data=accuracy_vs_distractor_df, kind='bar', palette='viridis', height=6, aspect=1.5
-)
-g.set(ylim=(0, 1))
-g.fig.subplots_adjust(top=0.9)
-g.fig.suptitle('Accuracy vs. Number of Distractors (k) per Label and Model', fontsize=16)
-plt.legend(title='Label - Model', bbox_to_anchor=(1.05, 1), loc='upper left')
 
 if save_figures:
     plt.savefig(os.path.join(output_dir, 'accuracy_vs_number_of_distractors.png'), bbox_inches='tight')
@@ -277,11 +271,12 @@ for label_model, df_group in accuracy_vs_distractor_df.groupby('Label_Model'):
     std_errors = df_group['Standard Error']
 
     # Corrected: Ensure the lower and upper bounds are within [0, 1]
-    upper_bound = np.minimum(accuracy_values + std_errors, 1)
-    lower_bound = np.maximum(accuracy_values - std_errors, 0)
+    upper_bound = np.minimum(accuracy_values + 1.96*std_errors, 1)
+    lower_bound = np.maximum(accuracy_values - 1.96*std_errors, 0)
 
     # Plot the accuracy line
-    plt.plot(k_values, accuracy_values, '-o', label=label_model)
+    wrapped_label = "\n".join(textwrap.wrap(label_model, width=max_width))
+    plt.plot(k_values, accuracy_values, '-o', label=wrapped_label)
 
     # Fill between the upper and lower bounds
     plt.fill_between(k_values, lower_bound, upper_bound, alpha=0.2)

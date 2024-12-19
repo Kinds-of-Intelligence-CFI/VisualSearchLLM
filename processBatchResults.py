@@ -324,11 +324,13 @@ parser.add_argument("-rc", "--rowsColumns", action='store_true')
 parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet"}, required=True)
 args = parser.parse_args()
 
+
+resultFileType = "Coords" if args.expect_coords else "Cells" if args.rowsColumns else "Quadrant"
 # Call the function with the parsed arguments
 process_batch_responses(
     dataset_dir="results/"+args.directory,
     annotations_file=args.annotations_file,
-    results_file=args.model+"_results"+".csv",
+    results_file=args.model+"_results_"+resultFileType+".csv",
     batch_responses_file=args.model+"_"+args.batch_responses,
     expect_coordinates=args.expect_coords,
     rows_and_columns=args.rowsColumns,

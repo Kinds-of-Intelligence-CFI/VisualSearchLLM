@@ -37,7 +37,7 @@ for dire in args.directories:
     label = dir_label_map[dire]
     dir_path = "results/"+dire
     # Get list of result files in the directory
-    result_files = [f for f in os.listdir(dir_path) if f.endswith('_results.csv')]
+    result_files = [f for f in os.listdir(dir_path) if f.endswith('_results_Quadrant.csv')]
     if not result_files:
         raise FileNotFoundError(f"No result files found in directory: {dir_path}")
     for result_file in result_files:

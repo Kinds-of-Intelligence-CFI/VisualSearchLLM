@@ -9,22 +9,31 @@ def extract_relevant_data(result):
     """
     Extracts only the relevant parts of the BetaMessageBatchIndividualResponse object.
     """
-    return {
-        "custom_id": result.custom_id,
-        "result": {
-            "type": result.result.type,
-            "message": {
-                "id": result.result.message.id,
-                "content": [
-                    {"text": block.text, "type": block.type}
-                    for block in result.result.message.content
-                ],
-                "model": result.result.message.model,
-                "role": result.result.message.role,
-                "stop_reason": result.result.message.stop_reason,
+    try:
+        return {
+            "custom_id": result.custom_id,
+            "result": {
+                "type": result.result.type,
+                "message": {
+                    "id": result.result.message.id,
+                    "content": [
+                        {"text": block.text, "type": block.type}
+                        for block in result.result.message.content
+                    ],
+                    "model": result.result.message.model,
+                    "role": result.result.message.role,
+                    "stop_reason": result.result.message.stop_reason,
+                }
             }
         }
-    }
+    except:
+        return {
+            "custom_id": result.custom_id,
+            "result": {
+            "type": result.result.type,
+            "message": "Error"
+            }
+        }
 
 # Argument parser for directory
 parser = argparse.ArgumentParser()
