@@ -24,7 +24,7 @@ all_grouped = []
 
 # Process each directory
 for dire in args.directories:
-    dir_path="results/"+dire
+    dir_path = "results/" + dire
     label = dir_label_map[dire]
     
     # Get list of result files in the directory
@@ -42,8 +42,8 @@ for dire in args.directories:
         # Assuming filenames are like 'gpt-4o_results.csv', 'claude-sonnet_results.csv'
         model_name = result_file.replace('_results.csv', '')
         
-        # Remove rows with missing Euclidean error values
-        df_clean = df.dropna(subset=['euclidean_error'])
+        # Remove rows with missing Euclidean error values and create a copy to avoid warnings
+        df_clean = df.dropna(subset=['euclidean_error']).copy()
         
         # Ensure 'num_distractors' is a numeric type
         df_clean['num_distractors'] = pd.to_numeric(df_clean['num_distractors'], errors='coerce')
@@ -92,9 +92,17 @@ plt.xlabel('Number of Distractors', fontsize=14)
 plt.ylabel('Average Euclidean Error', fontsize=14)
 plt.title('Average Euclidean Error vs. Number of Distractors', fontsize=16)
 
-# Ensure the x-axis ticks are integers and ordered
-xticks = sorted(combined_grouped['num_distractors'].unique())
-plt.xticks(xticks)
+# Determine the full range of x-axis values
+min_distractors = combined_grouped['num_distractors'].min()
+max_distractors = combined_grouped['num_distractors'].max()
+
+# Set a maximum number of ticks (for example, 10) and calculate an appropriate step size
+max_ticks = 10
+tick_range = max_distractors - min_distractors
+step = max(1, tick_range // max_ticks)
+
+# Set x-axis ticks with the calculated step size
+plt.xticks(range(min_distractors, max_distractors + 1, step))
 
 # Adjust legend
 plt.legend(title='Label - Model', fontsize=12, bbox_to_anchor=(1.05, 1), loc='upper left')

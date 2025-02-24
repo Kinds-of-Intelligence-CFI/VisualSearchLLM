@@ -9,7 +9,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--directory")
 parser.add_argument("-p", "--prompt", type=int)
-parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet"}, required=True)
+parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "llama"}, required=True)
 args = parser.parse_args()
 
 directory="results/"+args.directory
@@ -72,6 +72,11 @@ for filename in tqdm(image_filenames, desc='Processing images'):
             "messages": constructMessage(args.prompt, "2", base64_image, args.model)
             }
 
+        }
+    elif args.model == "llama":
+        batch_request = {
+        "custom_id": filename,
+        "messages": constructMessage(args.prompt, "2", base64_image, args.model)
         }
 
 

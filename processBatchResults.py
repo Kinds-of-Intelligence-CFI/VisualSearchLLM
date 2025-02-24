@@ -63,6 +63,8 @@ def process_batch_responses(dataset_dir, annotations_file, results_file, batch_r
                 response_data = response_entry.get('response')
             elif model == "claude-sonnet":
                 response_data = response_entry.get("result")
+            elif model=="llama":
+                response_data=response_entry.get("content")
             else:
                 response_data = None
             error = response_entry.get('error')
@@ -100,6 +102,9 @@ def process_batch_responses(dataset_dir, annotations_file, results_file, batch_r
                     elif model =="claude-sonnet":
                         #print(response_data["message"]["content"][0]["text"])
                         assistant_message = response_data['message']['content'][0]["text"]
+
+                    elif model == "llama":
+                        assistant_message = response_data
                     
                     selected_response = assistant_message
 
@@ -321,11 +326,19 @@ parser.add_argument("-a", "--annotations_file", default="annotations.csv")
 parser.add_argument("-b", "--batch_responses", default="combined_batch_responses.jsonl")
 parser.add_argument("-c", "--expect_coords", action='store_true')
 parser.add_argument("-rc", "--rowsColumns", action='store_true')
-parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet"}, required=True)
+parser.add_argument("-q", "--quadrants", action="store_true")
+parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "llama"}, required=True)
 args = parser.parse_args()
 
+mapping = [
+    (args.expect_coords, "Coords"),
+    (args.rowsColumns, "Cells"),
+    (args.quadrants, "Quadrant")
+]
+resultFileType = next((value for condition, value in mapping if condition), None)
+if resultFileType is None:
+    raise ValueError("At least one of -c, -rc, -q must be used!")
 
-resultFileType = "Coords" if args.expect_coords else "Cells" if args.rowsColumns else "Quadrant"
 # Call the function with the parsed arguments
 process_batch_responses(
     dataset_dir="results/"+args.directory,
