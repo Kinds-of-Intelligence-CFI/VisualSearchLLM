@@ -12,7 +12,7 @@ def constructMessage(writing, shape, image, model):
 
     message = []
 
-    if model == "gpt-4o":
+    if model == "gpt-4o" or "llama" in model:
         message.append({"role": "system", "content": "You are an AI assistant that can analyze images and answer questions about them."})
 
 
@@ -23,12 +23,11 @@ def constructMessage(writing, shape, image, model):
     content.append({"type": "text", "text": prompts[writing]})
 
 
-    if model =="gpt-4o":
+    if model =="gpt-4o" or "llama" in model:
         content.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image}"}})
     elif model == "claude-sonnet":
         content.append({"type": "image", "source": {"type": "base64", "media_type":"image/png", "data":image}})
-    elif model == "llama":
-        content.append({"type": "image"})
+   
     else:
         raise ValueError("Incorrect Model Type")
 

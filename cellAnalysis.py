@@ -41,10 +41,10 @@ max_width = 15
 dataframes = []
 for dire in args.directories:
     label = dir_label_map[dire]
-    dir_path = "results/"+dire
+    dir_path = "results/"+dire+"/"
     # Get list of result files in the directory
     print(dir_path)
-    result_files = [f for f in os.listdir(dir_path) if f.endswith('_results_Cell.csv')]
+    result_files = [f for f in os.listdir(dir_path) if f.endswith('_results_Cells.csv')]
     print(result_files)
     if not result_files:
         raise FileNotFoundError(f"No result files found in directory: {dir_path}")
@@ -259,10 +259,6 @@ accuracy_vs_distractor_df = pd.DataFrame(accuracy_vs_distractor_data)
 # Combine Label and Model for plotting
 accuracy_vs_distractor_df['Label_Model'] = accuracy_vs_distractor_df['Label'] + ' - ' + accuracy_vs_distractor_df['Model']
 
-
-if save_figures:
-    plt.savefig(os.path.join(output_dir, 'accuracy_vs_number_of_distractors.png'), bbox_inches='tight')
-plt.show()
 
 # Plot line plot for accuracy vs number of distractors with shaded error region per label per model
 plt.figure(figsize=(10, 6))

@@ -9,7 +9,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--directory")
 parser.add_argument("-p", "--prompt", type=int)
-parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "llama"}, required=True)
+parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "llama11B", "llama90B", "llamaLocal"}, required=True)
 args = parser.parse_args()
 
 directory="results/"+args.directory
@@ -32,8 +32,10 @@ batch_requests = []
 
 if args.model == "gpt-4o":
     batch_limit=2500
-else:
+elif args.model == "claude-sonnet":
     batch_limit = 500
+else:
+    batch_limit = 50000
 #batch_limit = 2500  # Maximum number of requests per file
 file_count = 0  # Counter for file numbering
 current_batch_count = 0  # Counter for current batch size
@@ -73,7 +75,13 @@ for filename in tqdm(image_filenames, desc='Processing images'):
             }
 
         }
-    elif args.model == "llama":
+    elif args.model == "llama11B" or args.model=="llama90B":
+        batch_request = {
+        "custom_id": filename,
+        "messages": constructMessage(args.prompt, "2", base64_image, args.model)
+        }
+
+    elif args.model == "llamaLocal":
         batch_request = {
         "custom_id": filename,
         "messages": constructMessage(args.prompt, "2", base64_image, args.model)

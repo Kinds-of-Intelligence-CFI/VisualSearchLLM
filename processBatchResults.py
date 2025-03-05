@@ -63,7 +63,7 @@ def process_batch_responses(dataset_dir, annotations_file, results_file, batch_r
                 response_data = response_entry.get('response')
             elif model == "claude-sonnet":
                 response_data = response_entry.get("result")
-            elif model=="llama":
+            elif model=="llama11B" or model=="llama90B":
                 response_data=response_entry.get("content")
             else:
                 response_data = None
@@ -103,9 +103,9 @@ def process_batch_responses(dataset_dir, annotations_file, results_file, batch_r
                         #print(response_data["message"]["content"][0]["text"])
                         assistant_message = response_data['message']['content'][0]["text"]
 
-                    elif model == "llama":
+                    elif model == "llama11B" or "llama90B":
                         assistant_message = response_data
-                    
+                        
                     selected_response = assistant_message
 
                     if expect_coordinates:
@@ -327,7 +327,7 @@ parser.add_argument("-b", "--batch_responses", default="combined_batch_responses
 parser.add_argument("-c", "--expect_coords", action='store_true')
 parser.add_argument("-rc", "--rowsColumns", action='store_true')
 parser.add_argument("-q", "--quadrants", action="store_true")
-parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "llama"}, required=True)
+parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "llama11B", "llama90B"}, required=True)
 args = parser.parse_args()
 
 mapping = [
