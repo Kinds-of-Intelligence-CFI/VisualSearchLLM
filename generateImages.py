@@ -516,7 +516,10 @@ if __name__ == '__main__':
     parser.add_argument("-dn", "--distractors", type=int, default=0)
     parser.add_argument("-r", "--rotation", type=int, default=0)
     parser.add_argument("-n", "--number", type=int, default=1000)
-    parser.add_argument("-z", "--debug", action=argparse.BooleanOptionalAction)
+    parser.add_argument("-z", "--debug", dest="debug", action="store_true", help="Enable debug mode")
+    parser.add_argument("--no-debug", dest="debug", action="store_false", help="Disable debug mode")
+    parser.set_defaults(debug=False)
+
     parser.add_argument("-t", "--target")
     parser.add_argument("-d", "--distractor")
     parser.add_argument("-tc", "--targetColour")
