@@ -547,93 +547,90 @@ if __name__ == '__main__':
 
 
 
-    match args.preset:
-        case "2Among5Colour":
-            generate_images(
-                dir=args.filename,
-                num_images=args.number,
-                min_k=0,
-                max_k=99,
-                c=1, 
-                targetShape="2",
-                distractorShape="5",
-                shapeSize=20,
-                theta_min=0,
-                theta_max=360,
-                targetColour="#00FF00",
-                distractorColour="#0000FF",
-                quadrantOrder=[1,2,3,4],
-                debug=False
-            )
-        case "2Among5NoColour":
-            generate_images(
-                dir=args.filename,
-                num_images=args.number,
-                min_k=0,
-                max_k=99,
-                c=0, 
-                targetShape="2",
-                distractorShape="5",
-                shapeSize=20,
-                theta_min=0,
-                theta_max=360,
-                targetColour="#00FF00",
-                distractorColour="",
-                quadrantOrder=[1,2,3,4],
-                debug=False
-            )
-        case "VerticalGradient":
-            generate_images(
-                dir=args.filename,
-                num_images=args.number,
-                min_k=0,
-                max_k=49,
-                c=0, 
-                targetShape="circle_gradient_top_bottom",
-                distractorShape="circle_gradient_bottom_top",
-                shapeSize=30,
-                theta_min=0,
-                theta_max=0,
-                targetColour="#000000",
-                distractorColour="",   
-                quadrantOrder=[1,2,3,4], 
-                debug=False
-            )
-        case "HorizontalGradient":
-            generate_images(
-                dir=args.filename,
-                num_images=args.number,
-                min_k=0,
-                max_k=49,
-                c=0, 
-                targetShape="circle_gradient_top_bottom",
-                distractorShape="circle_gradient_bottom_top",
-                shapeSize=30,
-                theta_min=90,
-                theta_max=90,
-                targetColour="#000000",
-                distractorColour="",
-                quadrantOrder=[1,2,3,4], 
-                debug=False
-            )
-
-
-        case _:
-            generate_images(
-                dir=args.filename,
-                num_images=args.number,
-                min_k=0,
-                max_k=args.distractors,
-                c=args.colour,
-                targetShape=args.target,
-                distractorShape=args.distractor,
-                shapeSize=args.size,
-                theta_min=0,
-                theta_max=args.rotation,
-                targetColour=args.targetColour,
-                distractorColour=args.distractorColour,
-                grid_cols = grid_cols,
-                grid_rows = grid_rows,
-                quadrantOrder=quadrantOrder,
-                debug=args.debug
-            )
+    if args.preset == "2Among5Colour":
+        generate_images(
+            dir=args.filename,
+            num_images=args.number,
+            min_k=0,
+            max_k=99,
+            c=1, 
+            targetShape="2",
+            distractorShape="5",
+            shapeSize=20,
+            theta_min=0,
+            theta_max=360,
+            targetColour="#00FF00",
+            distractorColour="#0000FF",
+            quadrantOrder=[1,2,3,4],
+            debug=False
+        )
+    elif args.preset == "2Among5NoColour":
+        generate_images(
+            dir=args.filename,
+            num_images=args.number,
+            min_k=0,
+            max_k=99,
+            c=0, 
+            targetShape="2",
+            distractorShape="5",
+            shapeSize=20,
+            theta_min=0,
+            theta_max=360,
+            targetColour="#00FF00",
+            distractorColour="",
+            quadrantOrder=[1,2,3,4],
+            debug=False
+        )
+    elif args.preset == "VerticalGradient":
+        generate_images(
+            dir=args.filename,
+            num_images=args.number,
+            min_k=0,
+            max_k=49,
+            c=0, 
+            targetShape="circle_gradient_top_bottom",
+            distractorShape="circle_gradient_bottom_top",
+            shapeSize=30,
+            theta_min=0,
+            theta_max=0,
+            targetColour="#000000",
+            distractorColour="",   
+            quadrantOrder=[1,2,3,4], 
+            debug=False
+        )
+    elif args.preset == "HorizontalGradient":
+        generate_images(
+            dir=args.filename,
+            num_images=args.number,
+            min_k=0,
+            max_k=49,
+            c=0, 
+            targetShape="circle_gradient_top_bottom",
+            distractorShape="circle_gradient_bottom_top",
+            shapeSize=30,
+            theta_min=90,
+            theta_max=90,
+            targetColour="#000000",
+            distractorColour="",
+            quadrantOrder=[1,2,3,4], 
+            debug=False
+        )
+    else:
+        generate_images(
+            dir=args.filename,
+            num_images=args.number,
+            min_k=0,
+            max_k=args.distractors,
+            c=args.colour,
+            targetShape=args.target,
+            distractorShape=args.distractor,
+            shapeSize=args.size,
+            theta_min=0,
+            theta_max=args.rotation,
+            targetColour=args.targetColour,
+            distractorColour=args.distractorColour,
+            grid_cols=grid_cols,
+            grid_rows=grid_rows,
+            quadrantOrder=quadrantOrder,
+            debug=args.debug
+        )
