@@ -23,11 +23,12 @@ def constructMessage(writing, shape, image, model):
     content.append({"type": "text", "text": prompts[writing]})
 
 
-    if model =="gpt-4o" or "llama" in model:
+    if model =="gpt-4o" or model=="llama11B" or model=="llama90B":
         content.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image}"}})
     elif model == "claude-sonnet":
         content.append({"type": "image", "source": {"type": "base64", "media_type":"image/png", "data":image}})
-   
+    elif model =="llamaLocal":
+        content.append({"type": "image"})
     else:
         raise ValueError("Incorrect Model Type")
 
