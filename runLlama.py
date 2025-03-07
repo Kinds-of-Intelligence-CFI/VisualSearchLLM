@@ -57,12 +57,19 @@ def load_model_and_run(directory, model_choice, batch_file, output_file):
                 return_tensors="pt"
             ).to(model.device)
             
+
+            prompt_length = inputs["input_ids"].shape[-1]
+
             # Generate the output
             output = model.generate(**inputs, max_new_tokens=30)
             
-            # Decode the output to get the text response
-            result = processor.decode(output[0], skip_special_tokens=True)
-            
+            # Remove the prompt tokens from the output
+            new_tokens = output[0][prompt_length:]
+            result = processor.decode(new_tokens, skip_special_tokens=True)
+
+
+
+
             # Create output dictionary
             out_dict = {
                 "custom_id": custom_id,
@@ -84,7 +91,7 @@ if __name__ == '__main__':
                         help="Directory containing images and batch file")
     parser.add_argument("-m", "--model", choices={"llama11B", "llama90B"}, required=True,
                         help="Model to use for inference")
-    parser.add_argument("-b", "--batchFile", default="batch_requests_0.jsonl",
+    parser.add_argument("-b", "--batchFile", default="batch_requests_llamaLocal_0.jsonl",
                         help="Name of the batch file with requests")
     parser.add_argument("-o", "--outputFile", default="responses.jsonl",
                         help="Name of the output file for responses")

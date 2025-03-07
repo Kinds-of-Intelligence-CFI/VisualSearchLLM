@@ -8,7 +8,7 @@ import math
 
 
 
-def process_batch_responses(dataset_dir, annotations_file, results_file, batch_responses_file, model, expect_coordinates=False, rows_and_columns=False):
+def process_batch_responses(dataset_dir, annotations_file, results_file, batch_responses_file, model, expect_coordinates=False, rows_and_columns=False, presence=False):
     # Read the annotations
     if expect_coordinates and rows_and_columns:
         raise ValueError("Cannot have both coordinates and rows and columns")
@@ -24,6 +24,10 @@ def process_batch_responses(dataset_dir, annotations_file, results_file, batch_r
             'error_x', 'error_y', 'euclidean_error',
             'selected_response'
         ]
+    elif presence:
+        fieldnames=[
+         'filename', 'num_distractors', 'size', 'colourbin',
+            'selected_presence', 'actual_presence', 'selected_response']
     elif rows_and_columns:
         fieldnames = [
             'filename', 'num_distractors', 'size', 'colourbin',
@@ -194,6 +198,26 @@ def process_batch_responses(dataset_dir, annotations_file, results_file, batch_r
                                 actual_col = None
                                 correct = False
 
+                    elif presence:
+                        try:
+                            if model == "gpt-4o":
+                                assistant_message = response_data['body']['choices'][0]['message']['content'].strip()
+                            elif model == "claude-sonnet":
+                                assistant_message = response_data['message']['content'][0]["text"]
+                            elif model in ["llama11B", "llama90B"]:
+                                assistant_message = response_data
+                            selected_response = assistant_message
+
+                            try:
+                                selected_presence = int(assistant_message)
+                                if selected_presence not in [0, 1]:
+                                    raise ValueError("Invalid presence value")
+                            except Exception as e:
+                                selected_presence = "Error"
+                        except Exception as e:
+                            selected_response = f"Error extracting response: {e}"
+                            selected_presence = "Error"
+
                     else:
                         # Quadrant mode
                         # Possible quadrant labels
@@ -264,15 +288,23 @@ def process_batch_responses(dataset_dir, annotations_file, results_file, batch_r
                     num_distractors = actual_annotation['num_distractors'].iloc[0]
                     object_size = actual_annotation['size'].iloc[0]
                     colourbin = actual_annotation['color_bin_index'].iloc[0]
+                    if presence:
+                        # If center_x == -1, target is not present (0); otherwise, it is (1)
+                        actual_center_x = actual_annotation['center_x'].iloc[0]
+                        actual_presence = 0 if actual_center_x == -1 else 1
                 else:
                     num_distractors = ''
                     object_size = ''
                     colourbin = ''
+                    if presence:
+                        actual_presence = ''
                     print(f"No annotations found for filename: {filename}")
             except Exception as e:
                 num_distractors = ''
                 object_size = ''
                 colourbin = ''
+                if presence:
+                        actual_presence = ''
                 print(f"Error retrieving annotations for custom_id {custom_id}: {e}")
                 continue  # Skip this entry if annotations can't be retrieved
 
@@ -303,6 +335,17 @@ def process_batch_responses(dataset_dir, annotations_file, results_file, batch_r
                     'correct': correct,
                     'selected_response': selected_response
                 })
+            elif presence:
+                writer.writerow({
+                    'filename': filename,
+                    'num_distractors': num_distractors,
+                    'size': object_size,
+                    'colourbin': colourbin,
+                    'selected_presence': selected_presence,
+                    'actual_presence': actual_presence,
+                    'selected_response': selected_response
+                })
+
             else:
                 writer.writerow({
                     'filename': filename,
@@ -324,13 +367,16 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--directory", required=True)
 parser.add_argument("-a", "--annotations_file", default="annotations.csv")
 parser.add_argument("-b", "--batch_responses", default="combined_batch_responses.jsonl")
-parser.add_argument("-c", "--expect_coords", action='store_true')
-parser.add_argument("-rc", "--rowsColumns", action='store_true')
-parser.add_argument("-q", "--quadrants", action="store_true")
+group = parser.add_mutually_exclusive_group(required=True)
+group.add_argument("-c", "--expect_coords", action='store_true', help="Coordinate mode")
+group.add_argument("-rc", "--rowsColumns", action='store_true', help="Rows and Columns mode")
+group.add_argument("-q", "--quadrants", action="store_true", help="Quadrant mode")
+group.add_argument("-p", "--presence", action="store_true", help="Presence mode")
 parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "llama11B", "llama90B"}, required=True)
 args = parser.parse_args()
 
 mapping = [
+    (args.presence, "Presence"),
     (args.expect_coords, "Coords"),
     (args.rowsColumns, "Cells"),
     (args.quadrants, "Quadrant")
@@ -347,5 +393,6 @@ process_batch_responses(
     batch_responses_file=args.model+"_"+args.batch_responses,
     expect_coordinates=args.expect_coords,
     rows_and_columns=args.rowsColumns,
+    presence=args.presence,
     model=args.model
 )
