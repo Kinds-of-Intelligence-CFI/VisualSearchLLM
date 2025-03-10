@@ -4,6 +4,7 @@ import os
 import glob
 import sys
 import argparse
+import re
 
 # Parse command-line arguments for DIRECTORY and MODEL.
 parser = argparse.ArgumentParser(
@@ -18,7 +19,7 @@ args = parser.parse_args()
 directory = args.directory
 model = args.model
 
-# Automatically find all batch request files in the given directory matching the pattern.
+# Find all batch request files matching the pattern in the provided directory.
 pattern = os.path.join(directory, "batch_requests_llamaLocal_*.jsonl")
 request_files = sorted(glob.glob(pattern))
 
@@ -29,10 +30,18 @@ if not request_files:
 # Build the list of parameter sets.
 param_sets = []
 for request_file in request_files:
+    base = os.path.basename(request_file)
+    # Extract the number from the batch request filename.
+    match = re.search(r'batch_requests_llamaLocal_(\d+)\.jsonl', base)
+    if match:
+        output_file = f"responses{match.group(1)}.jsonl"
+    else:
+        output_file = "responses.jsonl"  # Fallback if pattern doesn't match.
     param_sets.append({
         "DIRECTORY": directory,
         "MODEL": model,
-        "REQUESTS": os.path.basename(request_file)  # or use full path if needed
+        "REQUESTS": base,  # Use the base filename; change to full path if necessary.
+        "OUTPUT": output_file
     })
 
 # Submit a SLURM job for each parameter set.
