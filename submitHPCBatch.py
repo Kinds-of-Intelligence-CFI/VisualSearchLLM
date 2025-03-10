@@ -35,7 +35,7 @@ for request_file in request_files:
     # Extract the number from the batch request filename.
     match = re.search(r'batch_requests_llamaLocal_(\d+)\.jsonl', base)
     if match:
-        output_file = f"{model}Responses{match.group(1)}.jsonl"
+        output_file = f"{model}_responses{match.group(1)}.jsonl"
     else:
         output_file = "responses.jsonl"  # Fallback if pattern doesn't match.
     param_sets.append({
