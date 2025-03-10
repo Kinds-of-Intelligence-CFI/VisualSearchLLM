@@ -22,8 +22,9 @@ def load_model_and_run(directory, model_choice, batch_file, output_file):
         torch_dtype=torch.bfloat16,
         device_map="auto",
     )
+    print("Loaded Model")
     processor = AutoProcessor.from_pretrained(model_id)
-    
+    print("Loaded Processor")
     # Construct full file paths
     input_path = os.path.join(actualDirectory, batch_file)
     output_path = os.path.join(actualDirectory, output_file)
@@ -34,6 +35,7 @@ def load_model_and_run(directory, model_choice, batch_file, output_file):
     # Process each line in the input file
     with open(input_path, 'r') as f, open(output_path, 'w') as out_f:
         for i, line in enumerate(f):
+            print("begin image "+str(i))
             line = line.strip()
             if not line:
                 continue  # Skip empty lines
