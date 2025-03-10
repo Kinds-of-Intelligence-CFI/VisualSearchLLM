@@ -96,4 +96,4 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--outputFile", default="responses.jsonl",
                         help="Name of the output file for responses")
     args = parser.parse_args()
-    load_model_and_run(args.directory, args.model, args.batchFile, args.outputFile)
+    load_model_and_run(args.directory, args.model, args.batchFile, args.model+args.outputFile)

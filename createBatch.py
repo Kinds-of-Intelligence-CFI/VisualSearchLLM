@@ -8,7 +8,7 @@ import argparse
 # Paths
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--directory")
-parser.add_argument("-p", "--prompt", type=int)
+parser.add_argument("-p", "--prompt")
 parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "llama11B", "llama90B", "llamaLocal"}, required=True)
 args = parser.parse_args()
 
