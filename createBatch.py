@@ -35,7 +35,7 @@ if args.model == "gpt-4o":
 elif args.model == "claude-sonnet":
     batch_limit = 500
 else:
-    batch_limit = 50000
+    batch_limit = 50
 #batch_limit = 2500  # Maximum number of requests per file
 file_count = 0  # Counter for file numbering
 current_batch_count = 0  # Counter for current batch size

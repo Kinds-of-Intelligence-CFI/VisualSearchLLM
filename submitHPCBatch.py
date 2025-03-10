@@ -10,17 +10,18 @@ import re
 parser = argparse.ArgumentParser(
     description="Submit SLURM jobs for each batch request file found in DIRECTORY."
 )
-parser.add_argument("--directory", required=True,
+parser.add_argument("-d","--directory", required=True,
                     help="Directory containing the batch request files")
-parser.add_argument("--model", required=True,
+parser.add_argument("-m", "--model", required=True,
                     help="Model name to pass to the job submission")
 args = parser.parse_args()
 
 directory = args.directory
 model = args.model
 
-# Find all batch request files matching the pattern in the provided directory.
-pattern = os.path.join(directory, "batch_requests_llamaLocal_*.jsonl")
+# Automatically find all batch request files in the given directory matching the pattern.
+pattern = os.path.join("results/"+directory, "batch_requests_llamaLocal_*.jsonl")
+
 request_files = sorted(glob.glob(pattern))
 
 if not request_files:
@@ -34,7 +35,7 @@ for request_file in request_files:
     # Extract the number from the batch request filename.
     match = re.search(r'batch_requests_llamaLocal_(\d+)\.jsonl', base)
     if match:
-        output_file = f"responses{match.group(1)}.jsonl"
+        output_file = f"{model}Responses{match.group(1)}.jsonl"
     else:
         output_file = "responses.jsonl"  # Fallback if pattern doesn't match.
     param_sets.append({
@@ -48,4 +49,4 @@ for request_file in request_files:
 for params in param_sets:
     export_str = ",".join([f"{key}={value}" for key, value in params.items()])
     print(f"Submitting job with: {export_str}")
-    subprocess.run(["sbatch", "--export", export_str, "batch_script.sh"])
+    subprocess.run(["sbatch", "--export", export_str, "llamaSlurmTest.sh"])

@@ -95,7 +95,7 @@ if __name__ == '__main__':
                         help="Model to use for inference")
     parser.add_argument("-b", "--batchFile", default="batch_requests_llamaLocal_0.jsonl",
                         help="Name of the batch file with requests")
-    parser.add_argument("-o", "--outputFile", default="responses.jsonl",
+    parser.add_argument("-o", "--outputFile", default="Responses.jsonl",
                         help="Name of the output file for responses")
     args = parser.parse_args()
     load_model_and_run(args.directory, args.model, args.batchFile, args.model+args.outputFile)
