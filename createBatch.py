@@ -4,18 +4,28 @@ import json
 from tqdm import tqdm
 from constructMessage import constructMessage
 import argparse
+import pandas as pd
 
 # Paths
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--directory")
 parser.add_argument("-p", "--prompt")
+parser.add_argument("-f", "--finetuning", action='store_true', help="Create Finetuning batch")
 parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "llama11B", "llama90B", "llamaLocal"}, required=True)
 args = parser.parse_args()
 
-directory="results/"+args.directory
+
+if args.finetuning:
+    directory="finetuning/"+args.directory
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+else:
+    directory="results/"+args.directory
+    
 
 annotations_file = os.path.join(directory, 'annotations.csv')
-
+annotations = pd.read_csv(annotations_file)
 # Function to encode images in Base64
 def encode_image(image_path):
     with open(image_path, "rb") as image_file:
@@ -50,16 +60,25 @@ for filename in tqdm(image_filenames, desc='Processing images'):
     base64_image = encode_image(image_path)
 
     # Construct messages using the constructMessage function
-    
+    if args.finetuning:
+
+        solution= annotations[(annotations["filename"] == filename) & (annotations["target"] == True)][["row", "column"]]
+        cell = list(zip(solution['row'], solution['column']))[0]
+    else:
+        cell=None
     # Create the batch request JSON object
-    if args.model == "gpt-4o":
+
+    if args.finetuning:
+        batch_request = {"messages": constructMessage(args.prompt, "2", base64_image, args.model, args.finetuning, cell)}
+
+    elif args.model == "gpt-4o":
         batch_request = {
             "custom_id": filename,  # Use the filename as the custom_id
             "method": "POST",
             "url": "/v1/chat/completions",
             "body": {
                 "model": "gpt-4o",
-                "messages": constructMessage(args.prompt, "2", base64_image, args.model),
+                "messages": constructMessage(args.prompt, "2", base64_image, args.model, args.finetuning, cell),
                 "temperature": 0.0,
                 "max_tokens": 1000
             }

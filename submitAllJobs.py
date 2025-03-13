@@ -11,21 +11,22 @@ if __name__ == '__main__':
     parser.add_argument("-pr", "--preset", required=True)
     parser.add_argument("-p", "--prompt", required=True)
     parser.add_argument("-g", "--gpt4o", action="store_true")
-    parser.add_argument("-c" "--claude", action="store_true")
-    parser.add_argument("-l", "llama", action="store_true")
-    parser.parse_args()
+    parser.add_argument("-c", "--claude", action="store_true")
+    parser.add_argument("-l", "--llama", action="store_true")
+    args=parser.parse_args()
 
+    print(args.prompt)
 
- 	subprocess.run(["python3", "generate_images.py", "--d", parser.directory, "-n", parser.number, "-pr", parser.preset])
-    if parser.gpt4o:
-        subprocess.run(["python3", "createBatch.py", "-d", parser.directory, "-m", "gpt-4o", "-p", args.prompt])
-        subprocess.run(["python3", "submitBatch.py", "-d", parser.directory, "-m", "gpt-4o"])
-    if parser.claude:
-        subprocess.run(["python3", "createBatch.py", "-d", parser.directory, "-m", "claude-sonnet", "-p", args.prompt])
-        subprocess.run(["python3", "createBatch.py", "-d", parser.directory, "-m", "claude-sonnet"])
-    if parser.llama:
-        subprocess.run(["python3", "createBatch.py", "-d", parser.directory, "-m", "llamaLocal", "-p", args.prompt])
-        subprocess.run(["python3", "submitHPCbatch.py", "-d", parser.directory, "-m", "llama11B"])
-        subprocess.run(["python3", "submitHPCbatch.py", "-d", parser.directory, "-m", "llama90B"])
+    subprocess.run(["python3", "generateImages.py", "-d", args.directory, "-n", str(args.number), "-p", args.preset])
+    if args.gpt4o:
+        subprocess.run(["python3", "createBatch.py", "-d", args.directory, "-m", "gpt-4o", "-p", args.prompt])
+        subprocess.run(["python3", "submitBatch.py", "-d", args.directory, "-m", "gpt-4o"])
+    if args.claude:
+        subprocess.run(["python3", "createBatch.py", "-d", args.directory, "-m", "claude-sonnet", "-p", args.prompt])
+        subprocess.run(["python3", "submitBatch.py", "-d", args.directory, "-m", "claude-sonnet"])
+    if args.llama:
+        subprocess.run(["python3", "createBatch.py", "-d", args.directory, "-m", "llamaLocal", "-p", args.prompt])
+        subprocess.run(["python3", "submitHPCbatch.py", "-d", args.directory, "-m", "llama11B"])
+        subprocess.run(["python3", "submitHPCbatch.py", "-d", args.directory, "-m", "llama90B"])
     print("Finished")
 

@@ -40,7 +40,10 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
         quadrants = [f"Quadrant {q}" for q in quadrantOrder]
 
     # Output directory for images
-    output_dir = "results/"+dir
+    if args.finetuning:
+        output_dir = "finetuning/"+dir
+    else:
+        output_dir = "results/"+dir
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -512,7 +515,7 @@ def bounding_boxes_overlap(x1, y1, w1, h1, x2, y2, w2, h2):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--colour", type=int, default=0)
-    parser.add_argument("-f", "--filename", required=True)
+    parser.add_argument("-d", "--filename", required=True)
     parser.add_argument("-dn", "--distractors", type=int, default=0)
     parser.add_argument("-r", "--rotation", type=int, default=0)
     parser.add_argument("-n", "--number", type=int, default=1000)
@@ -521,13 +524,14 @@ if __name__ == '__main__':
     parser.set_defaults(debug=False)
 
     parser.add_argument("-t", "--target")
-    parser.add_argument("-d", "--distractor")
+    parser.add_argument("-di", "--distractor")
     parser.add_argument("-tc", "--targetColour")
     parser.add_argument("-dc", "--distractorColour")
     parser.add_argument("-s", "--size", type=int, default=20)
     parser.add_argument("-q", "--quadrants", type=str, help="Specify the number of rows and columns as 'rows,cols'")
     parser.add_argument("-qo", "--quadrantOrder", type=str, help="Specify the quadrant order as a comma-separated list of integers")
     parser.add_argument("-p", "--preset")
+    parser.add_argument("-f", "--finetuning", action="store_true")
     args = parser.parse_args()
 
 
