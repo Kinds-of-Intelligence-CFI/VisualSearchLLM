@@ -20,7 +20,7 @@ if not response_files:
     print(f"No response files found with pattern {pattern}")
     exit(1)
 
-combined_filename = os.path.join("results/"+directory, f"{model}_combined_batch_responses.json")
+combined_filename = os.path.join("results/"+directory, f"{model}_combined_batch_responses.jsonl")
 
 # Concatenate the files line-by-line. This works well for JSONL files.
 with open(combined_filename, "w") as outfile:
