@@ -30,3 +30,4 @@ with open(combined_filename, "w") as outfile:
                 outfile.write(line)
 
 print(f"Combined file created: {combined_filename}")
+
