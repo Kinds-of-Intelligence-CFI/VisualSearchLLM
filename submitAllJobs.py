@@ -26,7 +26,7 @@ if __name__ == '__main__':
         subprocess.run(["python3", "submitBatch.py", "-d", args.directory, "-m", "claude-sonnet"])
     if args.llama:
         subprocess.run(["python3", "createBatch.py", "-d", args.directory, "-m", "llamaLocal", "-p", args.prompt])
-        subprocess.run(["python3", "submitHPCbatch.py", "-d", args.directory, "-m", "llama11B"])
-        subprocess.run(["python3", "submitHPCbatch.py", "-d", args.directory, "-m", "llama90B"])
+        subprocess.run(["python3", "submitHPCBatch.py", "-d", args.directory, "-m", "llama11B"])
+        subprocess.run(["python3", "submitHPCBatch.py", "-d", args.directory, "-m", "llama90B"])
     print("Finished")
 
