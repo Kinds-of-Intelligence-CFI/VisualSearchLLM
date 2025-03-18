@@ -1,21 +1,9 @@
 import argparse
-from PIL import Image, ImageDraw, ImageColor
 import random
 import csv
 import os
-import math
-import matplotlib.colors
+import time
 
-import os
-import random
-import csv
-import math
-from PIL import Image, ImageDraw, ImageColor
-
-import os
-import random
-import csv
-import math
 from PIL import Image, ImageDraw, ImageColor
 
 def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorShape, 
@@ -532,6 +520,7 @@ if __name__ == '__main__':
     parser.add_argument("-qo", "--quadrantOrder", type=str, help="Specify the quadrant order as a comma-separated list of integers")
     parser.add_argument("-p", "--preset")
     parser.add_argument("-f", "--finetuning", action="store_true")
+    parser.add_argument("--seed", type=int, default=int(time.time()), help="Random seed (default: current time)")
     args = parser.parse_args()
 
 
@@ -552,7 +541,8 @@ if __name__ == '__main__':
     else:
         quadrantOrder = None
 
-
+    random.seed(args.seed)
+    print(f"Using random seed: {args.seed}")
 
     if args.preset == "2Among5Colour":
         generate_images(
