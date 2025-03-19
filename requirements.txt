@@ -1,0 +1,13 @@
+pandas
+scikit-learn
+seaborn
+matplotlib
+numpy
+openai
+anthropic
+tqdm
+Pillow
+requests
+torch
+transformers
+together

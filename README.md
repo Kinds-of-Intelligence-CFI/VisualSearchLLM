@@ -5,12 +5,18 @@ This code is for investigating the pop-out effect in Visual AI systems.
 
 To run this code from scratch the following should be done:
 
+## Install requirements
+
+- Create a python environment `python -m venv visualSearch`
+- Activate the environment (shown for Windows) `.\visualSearch\Scripts\Activate.ps1`
+- Install the requirements `pip install -r requirements.txt`
+
 ## Generate Images
 
 The dataset of images with varying visual processing demands.
 The datasets can be created using the generateImages.py file. 
-The intended use is `python generateImages.py -n x -f x -p x`
-where `-n` is the flag for the number of images to create, `-f` is the directory to store the images, and `-p` is a selection from preset options configuring the images created. More control over the images generated is possible using other flags.
+The intended use is `python generateImages.py -n x -d x -p x`
+where `-n` is the flag for the number of images to create, `-d` is the directory to store the images, and `-p` is a selection from preset options configuring the images created. More control over the images generated is possible using other flags.
 
 ## Create a Batch
 
