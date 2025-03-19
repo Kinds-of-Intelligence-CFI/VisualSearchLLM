@@ -8,7 +8,8 @@ def constructMessage(writing, shape, image, model, finetuning=False, solution=No
                "std2x2": f"The image is divided into a 2x2 grid. Each element of the grid is referred to as a cell. One of the objects in the image is the odd one out. In which cell is the odd object out in this image?  In the case where the objet overlaps multiple cells, please provide the cell where the centre of the object is located. Please only respond with 'Cell (i,j)' where (i,j) corresponds to the ith row and jth column of the grid. The top left cell is Cell (1,1). Do not reply with anything else.",
                "look2x2": f"The image is divided into a 2x2 grid. Each element of the grid is referred to as a cell. One of the objects in the image is the odd one out. In which cell is the odd object out in this image?  In the case where the objet overlaps multiple cells, please provide the cell where the centre of the object is located. Please only respond with 'Cell (i,j)' where (i,j) corresponds to the ith row and jth column of the grid. The top left cell is Cell (1,1). Do not reply with anything else. Make sure you carefully consider each cell before submitting your response.",
                "pres": f"In this image there are a number of objects. They are all identical except, possibly, for one. Can you identify whether the unique object is in the image? Please only answer with '1' if the object is present, and '0' if the object isn't present. Do not answer with anything else.",
-               "std2x2-2Among5": f"The image is divided into a 2x2 grid. Each element of the grid is referred to as a cell. In the presented image there are a number of objects. Almost all of the objects are the number 5 written as a numeral. There is a single 2 in the image, similarly represented by a numeral. In which cell is the 2 in? In the case where the 2 overlaps multiple cells, please provide the cell where the centre of the 2 is located. Please only respond with 'Cell (i,j)' where (i,j) corresponds to the ith row and jth column of the grid. The top left cell is Cell (1,1). Do not reply with anything else." 
+               "std2x2-2Among5": f"The image is divided into a 2x2 grid. Each element of the grid is referred to as a cell. In the presented image there are a number of objects. Almost all of the objects are the number 5 written as a numeral. There is a single 2 in the image, similarly represented by a numeral. In which cell is the 2 in? In the case where the 2 overlaps multiple cells, please provide the cell where the centre of the 2 is located. Please only respond with 'Cell (i,j)' where (i,j) corresponds to the ith row and jth column of the grid. The top left cell is Cell (1,1). Do not reply with anything else.",
+               "OOO-Uncertainty": f"The image is divided into a 2x2 grid. Each element of the grid is referred to as a cell. One of the objects in the image is the odd one out. In which cell is the odd object out in this image?  In the case where the objet overlaps multiple cells, please provide the cell where the centre of the object is located. Please respond with 'Cell (i,j)' where (i,j) corresponds to the ith row and jth column of the grid. The top left cell is Cell (1,1). If you are uncertain please guess but optionally add a description to note this."
               }
     message = []
 
@@ -20,6 +21,11 @@ def constructMessage(writing, shape, image, model, finetuning=False, solution=No
 
 
     content = []
+    print(model)
+    if model =="llamaLocal":
+        content.append({"type": "image"})
+
+
     content.append({"type": "text", "text": prompts[writing]})
 
 
@@ -27,8 +33,8 @@ def constructMessage(writing, shape, image, model, finetuning=False, solution=No
         content.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image}"}})
     elif model == "claude-sonnet":
         content.append({"type": "image", "source": {"type": "base64", "media_type":"image/png", "data":image}})
-    elif model =="llamaLocal":
-        content.append({"type": "image"})
+    elif model == "llamaLocal":
+        pass
     else:
         raise ValueError("Incorrect Model Type")
 
