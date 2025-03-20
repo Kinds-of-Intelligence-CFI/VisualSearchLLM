@@ -7,12 +7,11 @@ import time
 from PIL import Image, ImageDraw, ImageColor
 
 def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorShape, 
-                    shapeSize, theta_min, theta_max, targetColour, distractorColour,
+                    shapeSize, theta_min, theta_max, targetColour, distractorColour, conjunctive=False,
                     grid_rows=2, grid_cols=2, quadrantOrder=None, debug=False):
     # Set image dimensions
     width, height = 400, 400  # You can adjust the size as needed
 
-    
 
     # Generate quadrants based on grid dimensions and quadrantOrder
     num_quadrants = grid_rows * grid_cols
@@ -193,6 +192,26 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                 else:
                     special_distractor_index = random.randint(0, k - 1)
 
+
+
+            if conjunctive:
+                # W build a small function that randomly picks a
+                # distractor shape–color combo. It can share shape or color
+                # with the target, but not both (which would be the actual target).
+                possible_shapes = [targetShape, distractorShape]
+                possible_colors = [ImageColor.getrgb(targetColour),
+                                   ImageColor.getrgb(distractorColour)]
+                
+                def get_random_multifeature_combo():
+                    while True:
+                        s = random.choice(possible_shapes)
+                        c = random.choice(possible_colors)
+                        # Exclude the exact combination = (targetShape, targetColour)
+                        if not (s == targetShape and c == ImageColor.getrgb(targetColour)):
+                            return s, c
+
+
+
             # Generate k distractors
             for distractor_index in range(k):
                 max_attempts = 100  # Prevent infinite loops
@@ -215,53 +234,66 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                     distractor_center_x = random.uniform(min_center_x, max_center_x)
                     distractor_center_y = random.uniform(min_center_y, max_center_y)
 
-                    # Determine distractor color
-                    if c == -1:
-                        # Random color
-                        distractor_color = (
-                            random.randint(0, 255),
-                            random.randint(0, 255),
-                            random.randint(0, 255)
-                        )
+
+
+                    if conjunctive:
+                        # override shape and color if multiFeature is set.
+                        chosenShape, chosenColor = get_random_multifeature_combo()
+                        distractor_shape = chosenShape
+                        distractor_color = chosenColor
                         distractor_color_hex = '#%02x%02x%02x' % distractor_color
-                        distractor_color_bin_index = None  # Not applicable when c == -1
-                    elif c == -2:
-                        # All distractors are distractorColour except for one that is targetColour
-                        if distractor_index == special_distractor_index:
-                            distractor_color = ImageColor.getrgb(targetColour)
-                            distractor_color_hex = targetColour
-                            distractor_color_bin_index = 1  # For special distractor
-                        else:
-                            distractor_color = ImageColor.getrgb(distractorColour)
-                            distractor_color_hex = distractorColour
-                            distractor_color_bin_index = 0
+                        distractor_color_bin_index = None  # or some placeholder
+
                     else:
-                        # Use colors based on c
-                        if c == 0:
-                            # If c is 0, use targetColour as distractor color
-                            distractor_color = ImageColor.getrgb(targetColour)
-                            distractor_color_hex = targetColour
-                            distractor_color_bin_index = 0
-                        elif c == 1:
-                            # If c is 1, use distractorColour
-                            distractor_color = ImageColor.getrgb(distractorColour)
-                            distractor_color_hex = distractorColour
-                            distractor_color_bin_index = 0  # Only one distractor color
-                        else:
-                            # Interpolate between targetColour and distractorColour
-                            start_color_rgb = ImageColor.getrgb(targetColour)
-                            end_color_rgb = ImageColor.getrgb(distractorColour)
-                            distractor_colours = []
 
-                            for j in range(c):
-                                fraction = j / (c - 1) if c > 1 else 0
-                                R = round(start_color_rgb[0] * (1 - fraction) + end_color_rgb[0] * fraction)
-                                G = round(start_color_rgb[1] * (1 - fraction) + end_color_rgb[1] * fraction)
-                                B = round(start_color_rgb[2] * (1 - fraction) + end_color_rgb[2] * fraction)
-                                distractor_colours.append((j, (R, G, B)))  # Include color bin index j
 
-                            distractor_color_bin_index, distractor_color = random.choice(distractor_colours)
+                        # Determine distractor color
+                        if c == -1:
+                            # Random color
+                            distractor_color = (
+                                random.randint(0, 255),
+                                random.randint(0, 255),
+                                random.randint(0, 255)
+                            )
                             distractor_color_hex = '#%02x%02x%02x' % distractor_color
+                            distractor_color_bin_index = None  # Not applicable when c == -1
+                        elif c == -2:
+                            # All distractors are distractorColour except for one that is targetColour
+                            if distractor_index == special_distractor_index:
+                                distractor_color = ImageColor.getrgb(targetColour)
+                                distractor_color_hex = targetColour
+                                distractor_color_bin_index = 1  # For special distractor
+                            else:
+                                distractor_color = ImageColor.getrgb(distractorColour)
+                                distractor_color_hex = distractorColour
+                                distractor_color_bin_index = 0
+                        else:
+                            # Use colors based on c
+                            if c == 0:
+                                # If c is 0, use targetColour as distractor color
+                                distractor_color = ImageColor.getrgb(targetColour)
+                                distractor_color_hex = targetColour
+                                distractor_color_bin_index = 0
+                            elif c == 1:
+                                # If c is 1, use distractorColour
+                                distractor_color = ImageColor.getrgb(distractorColour)
+                                distractor_color_hex = distractorColour
+                                distractor_color_bin_index = 0  # Only one distractor color
+                            else:
+                                # Interpolate between targetColour and distractorColour
+                                start_color_rgb = ImageColor.getrgb(targetColour)
+                                end_color_rgb = ImageColor.getrgb(distractorColour)
+                                distractor_colours = []
+
+                                for j in range(c):
+                                    fraction = j / (c - 1) if c > 1 else 0
+                                    R = round(start_color_rgb[0] * (1 - fraction) + end_color_rgb[0] * fraction)
+                                    G = round(start_color_rgb[1] * (1 - fraction) + end_color_rgb[1] * fraction)
+                                    B = round(start_color_rgb[2] * (1 - fraction) + end_color_rgb[2] * fraction)
+                                    distractor_colours.append((j, (R, G, B)))  # Include color bin index j
+
+                                distractor_color_bin_index, distractor_color = random.choice(distractor_colours)
+                                distractor_color_hex = '#%02x%02x%02x' % distractor_color
 
                     # Draw the distractor shape and get the image
                     distractor_shape_image = draw_shape(canvas_size, shapeSize, distractorShape, distractor_color)
@@ -520,6 +552,8 @@ if __name__ == '__main__':
     parser.add_argument("-qo", "--quadrantOrder", type=str, help="Specify the quadrant order as a comma-separated list of integers")
     parser.add_argument("-p", "--preset")
     parser.add_argument("-f", "--finetuning", action="store_true")
+    parser.add_argument("--conjunctive", action="store_true", help="Allow distractors to share the target’s shape or color (but not both).")
+
     parser.add_argument("--seed", type=int, default=int(time.time()), help="Random seed (default: current time)")
     args = parser.parse_args()
 
@@ -561,6 +595,23 @@ if __name__ == '__main__':
             quadrantOrder=[1,2,3,4],
             debug=False
         )
+    elif args.preset == "conjunctive":
+        generate_images(
+            dir=args.filename,
+            num_images=args.number,
+            min_k=0,
+            max_k=99,
+            c=1, 
+            targetShape="2",
+            distractorShape="5",
+            shapeSize=20,
+            theta_min=0,
+            theta_max=360,
+            targetColour="#00FF00",
+            distractorColour="#0000FF",
+            quadrantOrder=[1,2,3,4],
+            conjunctive=True,
+            debug=False)
     elif args.preset == "2Among5ColourDn":
         generate_images(
             dir=args.filename,
