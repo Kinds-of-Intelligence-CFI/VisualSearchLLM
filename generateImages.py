@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw, ImageColor
 
 def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorShape, 
                     shapeSize, theta_min, theta_max, targetColour, distractorColour, conjunctive=False,
-                    grid_rows=2, grid_cols=2, quadrantOrder=None, debug=False):
+                    grid_rows=2, grid_cols=2, quadrantOrder=None, debug=False, present=False):
     # Set image dimensions
     width, height = 400, 400  # You can adjust the size as needed
 
@@ -47,8 +47,19 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
         row_height = height / grid_rows
 
         for i in range(num_images):
+
+
+            if present:
+                targetPresent = (random.random()<0.5)
+            else:
+                targetPresent = True
+
+
+
             # Randomly select k independently
             k = random.randint(min_k, max_k)
+
+
 
             # Create a new image with a white background
             image = Image.new('RGBA', (width, height), 'white')
@@ -67,123 +78,125 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
 
             occupied_areas = []
 
-            # Random rotation angle for the target
-            target_rotation = random.uniform(theta_min, theta_max)
+            if targetPresent:
 
-            # Adjust the canvas size to accommodate the rotated shape
-            padding = shapeSize * 0.05  # Existing padding
-            canvas_size = shapeSize + 2*padding
+                # Random rotation angle for the target
+                target_rotation = random.uniform(theta_min, theta_max)
 
-            # Generate random position for the target's center within the main image
-            max_center_x = width - canvas_size / 2
-            max_center_y = height - canvas_size / 2
-            min_center_x = canvas_size / 2
-            min_center_y = canvas_size / 2
+                # Adjust the canvas size to accommodate the rotated shape
+                padding = shapeSize * 0.05  # Existing padding
+                canvas_size = shapeSize + 2*padding
 
-            target_center_x = random.uniform(min_center_x, max_center_x)
-            target_center_y = random.uniform(min_center_y, max_center_y)
+                # Generate random position for the target's center within the main image
+                max_center_x = width - canvas_size / 2
+                max_center_y = height - canvas_size / 2
+                min_center_x = canvas_size / 2
+                min_center_y = canvas_size / 2
 
-            # Determine target color
-            if c == -1:
-                # Random color from red, green, or blue
-                target_color_options = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
-                target_color = random.choice(target_color_options)
-                target_color_hex = '#%02x%02x%02x' % target_color
-                target_color_bin_index = None  # Not applicable when c == -1
-            elif c == -2:
-                # Target color is distractorColour
-                target_color = ImageColor.getrgb(distractorColour)
-                target_color_hex = distractorColour
-                target_color_bin_index = 0  # Since the target is the same as distractor
-            else:
-                # Target color
-                target_color = ImageColor.getrgb(targetColour)
-                target_color_hex = targetColour
-                target_color_bin_index = 0  # Since the target is targetColour
+                target_center_x = random.uniform(min_center_x, max_center_x)
+                target_center_y = random.uniform(min_center_y, max_center_y)
 
-            # Draw the target shape and get the image
-            target_shape_image = draw_shape(canvas_size, shapeSize, targetShape, target_color)
+                # Determine target color
+                if c == -1:
+                    # Random color from red, green, or blue
+                    target_color_options = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
+                    target_color = random.choice(target_color_options)
+                    target_color_hex = '#%02x%02x%02x' % target_color
+                    target_color_bin_index = None  # Not applicable when c == -1
+                elif c == -2:
+                    # Target color is distractorColour
+                    target_color = ImageColor.getrgb(distractorColour)
+                    target_color_hex = distractorColour
+                    target_color_bin_index = 0  # Since the target is the same as distractor
+                else:
+                    # Target color
+                    target_color = ImageColor.getrgb(targetColour)
+                    target_color_hex = targetColour
+                    target_color_bin_index = 0  # Since the target is targetColour
 
-            # Rotate the target shape without expanding the canvas
-            target_shape_image = target_shape_image.rotate(-target_rotation, expand=False, resample=Image.BICUBIC)
+                # Draw the target shape and get the image
+                target_shape_image = draw_shape(canvas_size, shapeSize, targetShape, target_color)
 
-            # Adjust position to keep shape within image boundaries
-            adjusted_target_x = target_center_x - canvas_size / 2
-            adjusted_target_y = target_center_y - canvas_size / 2
+                # Rotate the target shape without expanding the canvas
+                target_shape_image = target_shape_image.rotate(-target_rotation, expand=False, resample=Image.BICUBIC)
 
-            # Ensure the shape is within the image boundaries
-            adjusted_target_x = min(max(adjusted_target_x, 0), width - canvas_size)
-            adjusted_target_y = min(max(adjusted_target_y, 0), height - canvas_size)
+                # Adjust position to keep shape within image boundaries
+                adjusted_target_x = target_center_x - canvas_size / 2
+                adjusted_target_y = target_center_y - canvas_size / 2
 
-            # Update the center coordinates after adjustments
-            target_center_x = adjusted_target_x + canvas_size / 2
-            target_center_y = adjusted_target_y + canvas_size / 2
+                # Ensure the shape is within the image boundaries
+                adjusted_target_x = min(max(adjusted_target_x, 0), width - canvas_size)
+                adjusted_target_y = min(max(adjusted_target_y, 0), height - canvas_size)
 
-            # Paste the rotated shape onto the main image
-            image.paste(target_shape_image, (int(adjusted_target_x), int(adjusted_target_y)), target_shape_image)
+                # Update the center coordinates after adjustments
+                target_center_x = adjusted_target_x + canvas_size / 2
+                target_center_y = adjusted_target_y + canvas_size / 2
 
-            # If debug is True, draw the bounding box and center cross around the target
-            if debug:
-                image_draw = ImageDraw.Draw(image)
-                bbox_draw = [adjusted_target_x, adjusted_target_y, adjusted_target_x + canvas_size, adjusted_target_y + canvas_size]
-                image_draw.rectangle(bbox_draw, outline='red', width=2)
-                # Draw a small cross at the center
-                cross_size = 5  # Length of the cross arms
-                image_draw.line(
-                    [
-                        (target_center_x - cross_size, target_center_y),
-                        (target_center_x + cross_size, target_center_y)
-                    ],
-                    fill='blue', width=1
-                )
-                image_draw.line(
-                    [
-                        (target_center_x, target_center_y - cross_size),
-                        (target_center_x, target_center_y + cross_size)
-                    ],
-                    fill='blue', width=1
-                )
+                # Paste the rotated shape onto the main image
+                image.paste(target_shape_image, (int(adjusted_target_x), int(adjusted_target_y)), target_shape_image)
 
-            # Add target to occupied areas
-            occupied_areas.append({
-                'type': targetShape,
-                'x': adjusted_target_x,
-                'y': adjusted_target_y,
-                'size': canvas_size  # Use canvas_size for width and height
-            })
+                # If debug is True, draw the bounding box and center cross around the target
+                if debug:
+                    image_draw = ImageDraw.Draw(image)
+                    bbox_draw = [adjusted_target_x, adjusted_target_y, adjusted_target_x + canvas_size, adjusted_target_y + canvas_size]
+                    image_draw.rectangle(bbox_draw, outline='red', width=2)
+                    # Draw a small cross at the center
+                    cross_size = 5  # Length of the cross arms
+                    image_draw.line(
+                        [
+                            (target_center_x - cross_size, target_center_y),
+                            (target_center_x + cross_size, target_center_y)
+                        ],
+                        fill='blue', width=1
+                    )
+                    image_draw.line(
+                        [
+                            (target_center_x, target_center_y - cross_size),
+                            (target_center_x, target_center_y + cross_size)
+                        ],
+                        fill='blue', width=1
+                    )
 
-            # Determine the quadrant for the target
-            col_index = int(target_center_x / col_width)
-            row_index = int(target_center_y / row_height)
-            # Ensure indices are within bounds
-            col_index = min(col_index, grid_cols - 1)
-            row_index = min(row_index, grid_rows - 1)
-            # Calculate the quadrant index
-            quadrant_index = row_index * grid_cols + col_index
-            quadrant = quadrants[quadrant_index]
-            row_number=row_index+1
-            column_number=col_index+1
-            # Save the image filename
-            filename = f'image_{i}.png'
+                # Add target to occupied areas
+                occupied_areas.append({
+                    'type': targetShape,
+                    'x': adjusted_target_x,
+                    'y': adjusted_target_y,
+                    'size': canvas_size  # Use canvas_size for width and height
+                })
 
-            # Write the annotation for the target
-            writer.writerow({
-                'filename': filename,
-                'shape_type': targetShape,
-                'target': True,
-                'center_x': target_center_x,
-                'center_y': target_center_y,
-                'size': shapeSize,
-                'color': target_color_hex,
-                'quadrant': quadrant,
-                'row': row_number,
-                'column': column_number,
-                'num_distractors': k,          # Include k in the CSV
-                'num_images': num_images,      # Include num_images in the CSV
-                'distractor_color': 'various' if c == -1 else target_color_hex,
-                'color_bin_index': target_color_bin_index,  # None when c == -1
-                'rotation_angle': target_rotation          # Include rotation angle
-            })
+                # Determine the quadrant for the target
+                col_index = int(target_center_x / col_width)
+                row_index = int(target_center_y / row_height)
+                # Ensure indices are within bounds
+                col_index = min(col_index, grid_cols - 1)
+                row_index = min(row_index, grid_rows - 1)
+                # Calculate the quadrant index
+                quadrant_index = row_index * grid_cols + col_index
+                quadrant = quadrants[quadrant_index]
+                row_number=row_index+1
+                column_number=col_index+1
+                # Save the image filename
+                filename = f'image_{i}.png'
+
+                # Write the annotation for the target
+                writer.writerow({
+                    'filename': filename,
+                    'shape_type': targetShape,
+                    'target': True,
+                    'center_x': target_center_x,
+                    'center_y': target_center_y,
+                    'size': shapeSize,
+                    'color': target_color_hex,
+                    'quadrant': quadrant,
+                    'row': row_number,
+                    'column': column_number,
+                    'num_distractors': k,          # Include k in the CSV
+                    'num_images': num_images,      # Include num_images in the CSV
+                    'distractor_color': 'various' if c == -1 else target_color_hex,
+                    'color_bin_index': target_color_bin_index,  # None when c == -1
+                    'rotation_angle': target_rotation          # Include rotation angle
+                })
 
             # For c == -2, select one distractor to be targetColour
             if c == -2:
@@ -542,7 +555,7 @@ if __name__ == '__main__':
     parser.add_argument("-z", "--debug", dest="debug", action="store_true", help="Enable debug mode")
     parser.add_argument("--no-debug", dest="debug", action="store_false", help="Disable debug mode")
     parser.set_defaults(debug=False)
-
+    parser.add_argument("-pr", "--present", action="store_true", help="If set, each image has a 50% chance to have NO target present.")
     parser.add_argument("-t", "--target")
     parser.add_argument("-di", "--distractor")
     parser.add_argument("-tc", "--targetColour")
@@ -628,6 +641,24 @@ if __name__ == '__main__':
             distractorColour="#0000FF",
             quadrantOrder=[1,2,3,4],
             debug=False
+        )
+    elif args.preset =="2Among5ColourPresent":
+        generate_images(
+            dir=args.filename,
+            num_images=args.number,
+            min_k=0,
+            max_k=99,
+            c=1, 
+            targetShape="2",
+            distractorShape="5",
+            shapeSize=20,
+            theta_min=0,
+            theta_max=360,
+            targetColour="#00FF00",
+            distractorColour="#0000FF",
+            quadrantOrder=[1,2,3,4],
+            debug=False,
+            present=True
         )
 
     elif args.preset == "2Among5NoColour":
