@@ -392,7 +392,7 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                 column_number= col_index+1
                 row_number=row_index+1
                 # Write the annotation for the distractor
-                f'image_{i}.png'
+                filename=f'image_{i}.png'
                 writer.writerow({
                     'filename': filename,
                     'shape_type': distractorShape,
