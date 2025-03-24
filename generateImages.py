@@ -78,20 +78,22 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
 
             occupied_areas = []
 
+            # Adjust the canvas size to accommodate the rotated shape
+            padding = shapeSize * 0.05  # Existing padding
+            canvas_size = shapeSize + 2*padding
+
+            # Generate random position for the target's center within the main image
+            max_center_x = width - canvas_size / 2
+            max_center_y = height - canvas_size / 2
+            min_center_x = canvas_size / 2
+            min_center_y = canvas_size / 2
+
             if targetPresent:
 
                 # Random rotation angle for the target
                 target_rotation = random.uniform(theta_min, theta_max)
 
-                # Adjust the canvas size to accommodate the rotated shape
-                padding = shapeSize * 0.05  # Existing padding
-                canvas_size = shapeSize + 2*padding
-
-                # Generate random position for the target's center within the main image
-                max_center_x = width - canvas_size / 2
-                max_center_y = height - canvas_size / 2
-                min_center_x = canvas_size / 2
-                min_center_y = canvas_size / 2
+                
 
                 target_center_x = random.uniform(min_center_x, max_center_x)
                 target_center_y = random.uniform(min_center_y, max_center_y)
@@ -390,6 +392,7 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                 column_number= col_index+1
                 row_number=row_index+1
                 # Write the annotation for the distractor
+                f'image_{i}.png'
                 writer.writerow({
                     'filename': filename,
                     'shape_type': distractorShape,
