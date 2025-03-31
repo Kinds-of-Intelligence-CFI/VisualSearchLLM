@@ -12,6 +12,7 @@ parser.add_argument("-d", "--directory")
 parser.add_argument("-p", "--prompt")
 parser.add_argument("-f", "--finetuning", action='store_true', help="Create Finetuning batch")
 parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "llama11B", "llama90B", "llamaLocal"}, required=True)
+parser.add_argument("-fmn", "--finetuned_model_name", default=None)
 args = parser.parse_args()
 
 
@@ -50,7 +51,8 @@ else:
 file_count = 0  # Counter for file numbering
 current_batch_count = 0  # Counter for current batch size
 
-
+if args.finetuned_model_name is not None:
+    print(f"Using finetuned model: {args.finetuned_model_name}")
 
 # Iterate over each image in the dataset with a progress bar
 for filename in tqdm(image_filenames, desc='Processing images'):
@@ -68,8 +70,10 @@ for filename in tqdm(image_filenames, desc='Processing images'):
         cell=None
     # Create the batch request JSON object
 
-    if args.finetuning:
+    if args.finetuning and args.model == "gpt-4o":
         batch_request = {"messages": constructMessage(args.prompt, "2", base64_image, args.model, args.finetuning, cell)}
+    elif args.finetuning:
+        raise ValueError("Fine tuning not implemented for models other than GPT-4o")
 
     elif args.model == "gpt-4o":
         batch_request = {
@@ -77,7 +81,8 @@ for filename in tqdm(image_filenames, desc='Processing images'):
             "method": "POST",
             "url": "/v1/chat/completions",
             "body": {
-                "model": "gpt-4o",
+                # Default to the most recent snapshot at the time of writing that supports fine tuning
+                "model": "gpt-4o-2024-08-06" if args.finetuned_model_name is None else args.finetuned_model_name,
                 "messages": constructMessage(args.prompt, "2", base64_image, args.model, args.finetuning, cell),
                 "temperature": 0.0,
                 "max_tokens": 1000

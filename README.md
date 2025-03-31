@@ -36,7 +36,7 @@ Batches occur asynchronously, seemingly whenever the providers have available co
 This will display, for each batch, the number of requests completed. Once all batches are complete, the results files will be downloaded.
 
 ## Processing Batch Results
-To turn the batch results into a more readable format we need to pocess them. To do this we use
+To turn the batch results into a more readable format we need to process them. To do this we use
 `python processBatchResults.py -d x -m x` 
 We have a few extra options depending on whether we are expecting the results to be coordinates, cells, or quadrant numbers. 
 Either `-c`, `-rc`, `-q`
