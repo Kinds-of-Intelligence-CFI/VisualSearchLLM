@@ -18,16 +18,40 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
     if expect_coordinates and rows_and_columns:
         raise ValueError("Cannot have both coordinates and rows and columns")
 
-    annotations = pd.read_csv(os.path.join(dataset_dir, annotations_file))
+    annotations_path = os.path.join(dataset_dir, annotations_file)
+    if not os.path.isfile(annotations_path):
+        raise FileNotFoundError(f"Annotations file not found: {annotations_path}")
 
-    # -- BUILD A DICTIONARY FOR FAST LOOKUPS --
-    # Exactly one row for each filename has target == True (unless not present at all).
-    # We'll store that row in a dictionary for quick O(1) lookups.
-    target_rows = {}
+    annotations = pd.read_csv(annotations_path)
+
+    # ----------------------------------------------------------------
+    # BUILD TWO DICTIONARIES FOR FAST LOOKUPS
+    #
+    # 1) meta_by_filename: stores the "metadata" row for each filename
+    #    (num_distractors, size, colourbin, etc.) – we only need one row
+    #    per file, presumably they are the same across all objects/distractors.
+    #
+    # 2) target_row_by_filename: stores the row with target == True if it exists.
+    #    If none exists, it returns None.
+    # ----------------------------------------------------------------
+    meta_by_filename = {}
+    target_row_by_filename = {}
+
     for _, row in annotations.iterrows():
+        fname = row["filename"]
+
+        # If we haven't stored a meta row yet, do so.
+        # This ensures we get size/distractors/colourbin even if there's no target row.
+        if fname not in meta_by_filename:
+            meta_by_filename[fname] = {
+                "num_distractors": row["num_distractors"],
+                "size": row["size"],
+                "color_bin_index": row["color_bin_index"]
+            }
+
+        # If this row is the target, store it in the target dictionary
         if row["target"] == True:
-            fname = row["filename"]
-            target_rows[fname] = row
+            target_row_by_filename[fname] = row
 
     # Prepare the results CSV
     if expect_coordinates:
@@ -54,12 +78,17 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
             'selected_quadrant', 'actual_quadrant', 'correct', 'selected_response'
         ]
 
-    with open(os.path.join(dataset_dir, results_file), mode='w', newline='', encoding='utf-8') as csvfile:
+    results_path = os.path.join(dataset_dir, results_file)
+    batch_responses_path = os.path.join(dataset_dir, batch_responses_file)
+
+    with open(results_path, mode='w', newline='', encoding='utf-8') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
-        # Read and process the batch responses line by line
-        with open(os.path.join(dataset_dir, batch_responses_file), 'r', encoding='utf-8') as f:
+        if not os.path.isfile(batch_responses_path):
+            raise FileNotFoundError(f"Batch responses file not found: {batch_responses_path}")
+
+        with open(batch_responses_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
 
         for line in tqdm(lines, desc='Processing batch responses'):
@@ -93,6 +122,22 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
             selected_response = ''
             filename = custom_id
 
+            # Look up metadata for this file if it exists
+            meta = meta_by_filename.get(filename, None)
+            # Look up the target row if it exists
+            trow = target_row_by_filename.get(filename, None)
+
+            # We'll fill these fields from meta or trow as needed
+            if meta is not None:
+                num_distractors = meta["num_distractors"]
+                object_size = meta["size"]
+                colourbin = meta["color_bin_index"]
+            else:
+                # If we have absolutely no data on this file in the CSV
+                num_distractors = ''
+                object_size = ''
+                colourbin = ''
+
             # Handle errors
             if error is not None:
                 selected_response = f"Error: {error}"
@@ -121,6 +166,8 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
                         assistant_message = response_data['message']['content'][0]["text"]
                     elif model in {"llama11B", "llama90B"}:
                         assistant_message = response_data
+                    else:
+                        assistant_message = ""
 
                     selected_response = assistant_message
 
@@ -150,16 +197,14 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
                             actual_center_x = None
                             actual_center_y = None
                         else:
-                            # Look up the target row from our dictionary
-                            target_row = target_rows.get(filename, None)
-                            if target_row is not None:
-                                actual_center_x = target_row['center_x']
-                                actual_center_y = target_row['center_y']
+                            if trow is not None:
+                                actual_center_x = trow['center_x']
+                                actual_center_y = trow['center_y']
                                 error_x = selected_x - actual_center_x
                                 error_y = selected_y - actual_center_y
                                 euclidean_error = math.sqrt(error_x**2 + error_y**2)
                             else:
-                                # No row for this file
+                                # No target row for this file
                                 actual_center_x = None
                                 actual_center_y = None
                                 error_x = None
@@ -190,11 +235,9 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
                             actual_row = None
                             actual_col = None
                         else:
-                            # Look up the target row
-                            target_row = target_rows.get(filename, None)
-                            if target_row is not None:
-                                actual_row = target_row['row']
-                                actual_col = target_row['column']
+                            if trow is not None:
+                                actual_row = trow['row']
+                                actual_col = trow['column']
                                 correct = (selected_row == actual_row) and (selected_col == actual_col)
                             else:
                                 actual_row = None
@@ -203,9 +246,9 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
 
                     elif presence:
                         # Presence mode
+                        # We expect a 0/1 from the assistant
                         try:
-                            # Attempt to parse an integer 0/1
-                            selected_presence = int(assistant_message)
+                            selected_presence = int(assistant_message[0])
                             if selected_presence not in [0, 1]:
                                 raise ValueError("Invalid presence value")
                         except Exception as e:
@@ -214,18 +257,16 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
 
                     else:
                         # Quadrant mode
-                        # Possible quadrant labels
-                        quadrants = annotations['quadrant'].unique().tolist()
-
+                        quadrants = annotations['quadrant'].dropna().unique().tolist()
                         selected_quadrant = 'Unknown'
+                        msg_lower = assistant_message.lower()
                         for q in quadrants:
-                            if q.lower() in assistant_message.lower():
+                            if q.lower() in msg_lower:
                                 selected_quadrant = q
                                 break
 
-                        target_row = target_rows.get(filename, None)
-                        if target_row is not None:
-                            actual_quadrant = target_row['quadrant']
+                        if trow is not None:
+                            actual_quadrant = trow['quadrant']
                             correct = (selected_quadrant == actual_quadrant)
                         else:
                             actual_quadrant = None
@@ -251,9 +292,8 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
                         selected_quadrant = 'Error'
                         actual_quadrant = None
                         correct = False
-
             else:
-                # No response
+                # No response data
                 selected_response = "No response data available"
                 if expect_coordinates:
                     selected_x = None
@@ -274,38 +314,18 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
                     actual_quadrant = None
                     correct = False
 
-            # Retrieve common annotations for the image (num_distractors, size, colourbin, presence, etc.)
-            try:
-                target_row = target_rows.get(filename, None)
-                if target_row is not None:
-                    num_distractors = target_row['num_distractors']
-                    object_size = target_row['size']
-                    colourbin = target_row['color_bin_index']
-
-                    if presence:
-                        # If center_x == -1 => target not present
-                        actual_center_x = target_row['center_x']
-                        actual_presence = 0 if actual_center_x == -1 else 1
+            # Now finalize the actual presence or other derived columns
+            if presence:
+                # actual_presence = 1 if there's a target row, else 0
+                if trow is not None:
+                    # If the row's center_x == -1, that implies no actual target
+                    # But presumably if target==True, we do have a real target 
+                    # (unless your CSV uses center_x == -1 as a "virtual target"?)
+                    cx = trow['center_x']
+                    actual_presence = 0 if cx == -1 else 1
                 else:
-                    # No row with target==True. We still might want placeholders.
-                    num_distractors = ''
-                    object_size = ''
-                    colourbin = ''
-                    if presence:
-                        # If there's no row at all, treat it as not present
-                        actual_presence = 0
-
-                    print(f"No annotations found for filename: {filename}")
-
-            except Exception as e:
-                # If something goes wrong getting the row data
-                num_distractors = ''
-                object_size = ''
-                colourbin = ''
-                if presence:
-                    actual_presence = ''
-                print(f"Error retrieving annotations for custom_id {custom_id}: {e}")
-                continue  # Skip writing if annotations can't be retrieved
+                    # No row with target==True => definitely 0
+                    actual_presence = 0
 
             # Write the result to CSV
             if expect_coordinates:
@@ -314,36 +334,45 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
                     'num_distractors': num_distractors,
                     'size': object_size,
                     'colourbin': colourbin,
-                    'selected_x': selected_x,
-                    'selected_y': selected_y,
-                    'actual_center_x': (actual_center_x if target_row is not None else None),
-                    'actual_center_y': (actual_center_y if target_row is not None else None),
-                    'error_x': (error_x if target_row is not None else None),
-                    'error_y': (error_y if target_row is not None else None),
-                    'euclidean_error': (euclidean_error if target_row is not None else None),
+                    'selected_x': selected_x if 'selected_x' in locals() else None,
+                    'selected_y': selected_y if 'selected_y' in locals() else None,
+                    'actual_center_x': actual_center_x if 'actual_center_x' in locals() else None,
+                    'actual_center_y': actual_center_y if 'actual_center_y' in locals() else None,
+                    'error_x': error_x if 'error_x' in locals() else None,
+                    'error_y': error_y if 'error_y' in locals() else None,
+                    'euclidean_error': euclidean_error if 'euclidean_error' in locals() else None,
                     'selected_response': selected_response
                 })
+
             elif rows_and_columns:
                 writer.writerow({
                     'filename': filename,
                     'num_distractors': num_distractors,
                     'size': object_size,
                     'colourbin': colourbin,
-                    'selected_cell': f"({selected_row}, {selected_col})" if (selected_row is not None and selected_col is not None) else 'Unknown',
-                    'actual_cell': f"({actual_row}, {actual_col})" if (actual_row is not None and actual_col is not None) else 'Unknown',
-                    'correct': correct,
+                    'selected_cell': f"({selected_row}, {selected_col})"
+                                     if ('selected_row' in locals() and selected_row is not None
+                                         and 'selected_col' in locals() and selected_col is not None)
+                                     else 'Unknown',
+                    'actual_cell': f"({actual_row}, {actual_col})"
+                                   if ('actual_row' in locals() and actual_row is not None
+                                       and 'actual_col' in locals() and actual_col is not None)
+                                   else 'Unknown',
+                    'correct': correct if 'correct' in locals() else False,
                     'selected_response': selected_response
                 })
+
             elif presence:
                 writer.writerow({
                     'filename': filename,
                     'num_distractors': num_distractors,
                     'size': object_size,
                     'colourbin': colourbin,
-                    'selected_presence': selected_presence,
-                    'actual_presence': actual_presence,
+                    'selected_presence': selected_presence if 'selected_presence' in locals() else "Error",
+                    'actual_presence': actual_presence if 'actual_presence' in locals() else 0,
                     'selected_response': selected_response
                 })
+
             else:
                 writer.writerow({
                     'filename': filename,
@@ -372,7 +401,6 @@ def main():
     parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "llama11B", "llama90B"}, required=True)
     args = parser.parse_args()
 
-    # Determine what kind of result file we need
     mode_mapping = [
         (args.presence, "Presence"),
         (args.expect_coords, "Coords"),
@@ -384,7 +412,7 @@ def main():
         raise ValueError("At least one of -c, -rc, -q, -p must be used!")
 
     process_batch_responses(
-        dataset_dir="results/" + args.directory,
+        dataset_dir=os.path.join("results", args.directory),
         annotations_file=args.annotations_file,
         results_file=f"{args.model}_results_{resultFileType}.csv",
         batch_responses_file=f"{args.model}_{args.batch_responses}",

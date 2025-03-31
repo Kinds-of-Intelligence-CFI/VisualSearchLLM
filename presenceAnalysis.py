@@ -37,6 +37,7 @@ for dire in args.directories:
     dir_path = os.path.join("results", dire)
     # Look for files ending with '_results_Presence.csv'
     result_files = [f for f in os.listdir(dir_path) if f.endswith('_results_Presence.csv')]
+    print(result_files)
     if not result_files:
         raise FileNotFoundError(f"No presence result files found in directory: {dir_path}")
     for result_file in result_files:
@@ -50,6 +51,8 @@ for dire in args.directories:
 
 # Combine all dataframes into one
 df = pd.concat(dataframes, ignore_index=True)
+
+
 
 # Ensure required columns are present
 required_columns = ['selected_presence', 'actual_presence', 'num_distractors', 'colourbin']
@@ -126,6 +129,8 @@ accuracy_vs_distractor_df['Label_Model'] = accuracy_vs_distractor_df['Label'] + 
 plt.figure(figsize=(10, 6))
 max_width = 15
 for label_model, group in accuracy_vs_distractor_df.groupby('Label_Model'):
+    # Sort the group by number of distractors
+    group = group.sort_values('Number of Distractors (k)')
     k_values = group['Number of Distractors (k)']
     accuracy_values = group['Accuracy']
     std_errors = group['Standard Error']
@@ -135,6 +140,7 @@ for label_model, group in accuracy_vs_distractor_df.groupby('Label_Model'):
     wrapped_label = "\n".join(textwrap.wrap(label_model, width=max_width))
     plt.plot(k_values, accuracy_values, '-o', label=wrapped_label)
     plt.fill_between(k_values, lower_bound, upper_bound, alpha=0.2)
+
 
 plt.xlabel('Number of Distractors (k)')
 plt.ylabel('Accuracy')
