@@ -8,9 +8,10 @@ import json
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--directory")
 parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet"}, required=True)
+parser.add_argument("-f", "--finetuning", action='store_true', help="Batch is for fine tuning")
 args = parser.parse_args()
 
-directory="results/"+args.directory
+directory=("finetuning/" if args.finetuning else "results/")+args.directory
 
 # Initialize client
 if args.model == "gpt-4o":
@@ -19,6 +20,10 @@ elif args.model == "claude-sonnet":
     client = anthropic.Anthropic(api_key = os.getenv("ANTHROPIC_API_KEY"))
 else:
     raise ValueError("Invalid model type!")
+
+if args.finetuning:
+    if args.model != "gpt-4o":
+        raise ValueError("Finetuning for models other than GPT 4o not supported")
 
 
 # Get all batch_requests_*.jsonl files in the directory
@@ -34,8 +39,26 @@ with open(batchid_file_path, "w") as batchid_file:
         # Full path to the batch file
         batch_file_path = os.path.join(directory, batch_file)
         
-    
-        if args.model =="gpt-4o":
+        if args.finetuning:
+            # Create input file in OpenAI
+            batch_input_file = client.files.create(
+                file=open(batch_file_path, "rb"),
+                purpose="fine-tune"
+            )
+
+            # Extract file ID from the response
+            batch_input_file_id = batch_input_file.id
+
+            # Create the fine tuning job
+            created_batch = client.fine_tuning.jobs.create(
+                training_file=batch_input_file_id,
+                model="gpt-4o-2024-08-06",
+            )
+
+            # Check the job was created successfully
+            print("-- Fine tuning jobs --")
+            print(client.fine_tuning.jobs.list(limit=10))
+        elif args.model =="gpt-4o":
             # Create input file in OpenAI
             batch_input_file = client.files.create(
                 file=open(batch_file_path, "rb"),
