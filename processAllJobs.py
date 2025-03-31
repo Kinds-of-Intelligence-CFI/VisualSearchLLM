@@ -12,6 +12,7 @@ if __name__ == '__main__':
     parser.add_argument("-rc", "--rowsandcolumns", action="store_true")
     parser.add_argument("-q", "--quadrants", action="store_true")
     parser.add_argument("-co", "--coordinates", action="store_true")
+    parser.add_argument("-p", "--presence", action="store_true")
     args=parser.parse_args()
 
 
@@ -22,6 +23,8 @@ if __name__ == '__main__':
         processFlag="-q"
     elif args.coordinates:
         processFlag="-c"
+    elif args.presence:
+        processFlag="-p"
  
     if args.gpt4o:
         subprocess.run(["python3", "processBatchResults.py", "-d", args.directory, "-m", "gpt-4o", processFlag])
