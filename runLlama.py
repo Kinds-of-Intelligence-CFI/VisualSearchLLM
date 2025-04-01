@@ -14,7 +14,7 @@ def load_model_and_run(directory, model_choice, batch_file, output_file):
     else:
         raise ValueError(f"Unsupported model choice: {model_choice}")
     
-    print(f"Loading model: {model_id}")
+    print(f"Loading model: {model_id}", flush=True)
     actualDirectory="results/"+directory
     # Load model and processor
     model = MllamaForConditionalGeneration.from_pretrained(
@@ -22,20 +22,20 @@ def load_model_and_run(directory, model_choice, batch_file, output_file):
         torch_dtype=torch.bfloat16,
         device_map="auto",
     )
-    print("Loaded Model")
+    print("Loaded Model", flush=True)
     processor = AutoProcessor.from_pretrained(model_id)
-    print("Loaded Processor")
+    print("Loaded Processor", flush=True)
     # Construct full file paths
     input_path = os.path.join(actualDirectory, batch_file)
     output_path = os.path.join(actualDirectory, output_file)
     
-    print(f"Processing batch file: {input_path}")
-    print(f"Writing results to: {output_path}")
+    print(f"Processing batch file: {input_path}", flush=True)
+    print(f"Writing results to: {output_path}", flush=True)
     
     # Process each line in the input file
     with open(input_path, 'r') as f, open(output_path, 'w') as out_f:
         for i, line in enumerate(f):
-            print("begin image "+str(i))
+            print("begin image "+str(i), flush=True)
             line = line.strip()
             if not line:
                 continue  # Skip empty lines
