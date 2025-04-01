@@ -681,6 +681,25 @@ if __name__ == '__main__':
             quadrantOrder=[1,2,3,4],
             debug=False
         )
+    elif args.preset == "2Among5NoColourPresent":
+        generate_images(
+            dir=args.filename,
+            num_images=args.number,
+            min_k=0,
+            max_k=99,
+            c=0, 
+            targetShape="2",
+            distractorShape="5",
+            shapeSize=20,
+            theta_min=0,
+            theta_max=360,
+            targetColour="#00FF00",
+            distractorColour="",
+            quadrantOrder=[1,2,3,4],
+            debug=False,
+            present=True
+        )
+
     elif args.preset == "2Among5NoColourDn":
         generate_images(
             dir=args.filename,

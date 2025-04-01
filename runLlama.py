@@ -22,6 +22,7 @@ def load_model_and_run(directory, model_choice, batch_file, output_file):
         torch_dtype=torch.bfloat16,
         device_map="auto",
     )
+    model.tie_weights()
     print("Loaded Model")
     processor = AutoProcessor.from_pretrained(model_id)
     print("Loaded Processor")

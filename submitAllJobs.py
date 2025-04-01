@@ -6,6 +6,7 @@ import argparse
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--directory", required=True)
+    parser.add_argument("-dn", "--distractors", type=int, default=-1)
     parser.add_argument("-n", "--number", type=int, default=1000)
     parser.add_argument("-f", "--finetuning", action="store_true")
     parser.add_argument("-pr", "--preset", required=True)
@@ -17,7 +18,11 @@ if __name__ == '__main__':
 
     print(args.prompt)
 
-    subprocess.run(["python3", "generateImages.py", "-d", args.directory, "-n", str(args.number), "-p", args.preset])
+    if args.distractors == -1:
+        distractorArgs = ["-dn", str(args.distractors)]
+    else:
+        distractorArgs = []
+    subprocess.run(["python3", "generateImages.py", "-d", args.directory, "-n", str(args.number), "-p", args.preset]+distractorArgs)
     if args.gpt4o:
         subprocess.run(["python3", "createBatch.py", "-d", args.directory, "-m", "gpt-4o", "-p", args.prompt])
         subprocess.run(["python3", "submitBatch.py", "-d", args.directory, "-m", "gpt-4o"])
