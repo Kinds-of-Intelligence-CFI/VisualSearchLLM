@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw, ImageColor
 
 def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorShape, 
                     shapeSize, theta_min, theta_max, targetColour, distractorColour, conjunctive=False,
-                    grid_rows=2, grid_cols=2, quadrantOrder=None, debug=False, present=False):
+                    grid_rows=2, grid_cols=2, quadrantOrder=None, debug=False, present=False, colourMode="explicit", colourList=None):
     # Set image dimensions
     width, height = 400, 400  # You can adjust the size as needed
 
@@ -47,6 +47,24 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
         row_height = height / grid_rows
 
         for i in range(num_images):
+
+
+
+            if colourMode == "explicit":
+                currentTargetColour = targetColour
+                currentDistractorColour = distractorColour
+            elif colourMode == "randomDifferent":
+                if not colourList or len(colourList) < 2:
+                    raise ValueError("randomDifferent mode requires at least two colours in --colourList")
+                currentTargetColour, currentDistractorColour = random.sample(colourList, 2)
+            elif colourMode == "randomSame":
+                if not colourList or len(colourList) < 1:
+                    raise ValueError("randomSame mode requires at least one colour in --colourList")
+                chosenColor = random.choice(colourList)
+                currentTargetColour = chosenColor
+                currentDistractorColour = chosenColor
+
+
 
 
             if present:
@@ -112,8 +130,8 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                     target_color_bin_index = 0  # Since the target is the same as distractor
                 else:
                     # Target color
-                    target_color = ImageColor.getrgb(targetColour)
-                    target_color_hex = targetColour
+                    target_color = ImageColor.getrgb(currentTargetColour)
+                    target_color_hex = currentTargetColour
                     target_color_bin_index = 0  # Since the target is targetColour
 
                 # Draw the target shape and get the image
@@ -214,15 +232,15 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                 # distractor shape–color combo. It can share shape or color
                 # with the target, but not both (which would be the actual target).
                 possible_shapes = [targetShape, distractorShape]
-                possible_colors = [ImageColor.getrgb(targetColour),
-                                   ImageColor.getrgb(distractorColour)]
+                possible_colors = [ImageColor.getrgb(currentTargetColour),
+                                   ImageColor.getrgb(currentDistractorColour)]
                 
                 def get_random_multifeature_combo():
                     while True:
                         s = random.choice(possible_shapes)
                         c = random.choice(possible_colors)
                         # Exclude the exact combination = (targetShape, targetColour)
-                        if not (s == targetShape and c == ImageColor.getrgb(targetColour)):
+                        if not (s == targetShape and c == ImageColor.getrgb(currentTargetColour)):
                             return s, c
 
 
@@ -275,29 +293,29 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                         elif c == -2:
                             # All distractors are distractorColour except for one that is targetColour
                             if distractor_index == special_distractor_index:
-                                distractor_color = ImageColor.getrgb(targetColour)
-                                distractor_color_hex = targetColour
+                                distractor_color = ImageColor.getrgb(currentTargetColour)
+                                distractor_color_hex = currentTargetColour
                                 distractor_color_bin_index = 1  # For special distractor
                             else:
-                                distractor_color = ImageColor.getrgb(distractorColour)
-                                distractor_color_hex = distractorColour
+                                distractor_color = ImageColor.getrgb(currentDistractorColour)
+                                distractor_color_hex = currentDistractorColour
                                 distractor_color_bin_index = 0
                         else:
                             # Use colors based on c
                             if c == 0:
                                 # If c is 0, use targetColour as distractor color
-                                distractor_color = ImageColor.getrgb(targetColour)
-                                distractor_color_hex = targetColour
+                                distractor_color = ImageColor.getrgb(currentTargetColour)
+                                distractor_color_hex = currentTargetColour
                                 distractor_color_bin_index = 0
                             elif c == 1:
                                 # If c is 1, use distractorColour
-                                distractor_color = ImageColor.getrgb(distractorColour)
-                                distractor_color_hex = distractorColour
+                                distractor_color = ImageColor.getrgb(currentDistractorColour)
+                                distractor_color_hex = currentDistractorColour
                                 distractor_color_bin_index = 0  # Only one distractor color
                             else:
                                 # Interpolate between targetColour and distractorColour
-                                start_color_rgb = ImageColor.getrgb(targetColour)
-                                end_color_rgb = ImageColor.getrgb(distractorColour)
+                                start_color_rgb = ImageColor.getrgb(currentTargetColour)
+                                end_color_rgb = ImageColor.getrgb(currentDistractorColour)
                                 distractor_colours = []
 
                                 for j in range(c):
@@ -502,6 +520,38 @@ def draw_shape(canvas_size, shapeSize, shape, color):
         # Draw digits '2' or '5' using the seven-segment representation
         draw = ImageDraw.Draw(shape_image)
         draw_seven_segment_digit(draw, half_canvas_size, half_canvas_size, shapeSize * 0.85, digit=shape, color=color)
+
+    elif shape == 'T':
+        draw = ImageDraw.Draw(shape_image)
+        # Use a scale factor less than before to give extra margin
+        scaleFactor = 0.8  
+        offset = (canvas_size - shapeSize * scaleFactor) / 2
+        # Thinner bars for the T
+        barHeight = shapeSize * 0.2  
+        stemWidth = shapeSize * 0.2  
+        # Draw the horizontal bar (top of T)
+        draw.rectangle([(offset, offset), 
+                        (offset + shapeSize * scaleFactor, offset + barHeight)], fill=color)
+        # Draw the vertical stem, centered horizontally within the canvas
+        stemLeft = (canvas_size - stemWidth) / 2
+        stemTop = offset + barHeight
+        draw.rectangle([(stemLeft, stemTop), 
+                        (stemLeft + stemWidth, offset + shapeSize * scaleFactor)], fill=color)
+
+    elif shape == 'L':
+        draw = ImageDraw.Draw(shape_image)
+        scaleFactor = 0.8  # Reduced scale factor for a margin
+        offset = (canvas_size - shapeSize * scaleFactor) / 2
+        # Thinner bar for the L shape
+        barThickness = shapeSize * 0.2  
+        # Draw the vertical bar on the left
+        draw.rectangle([(offset, offset), 
+                        (offset + barThickness, offset + shapeSize * scaleFactor)], fill=color)
+        # Draw the horizontal bar at the bottom
+        draw.rectangle([(offset, offset + shapeSize * scaleFactor - barThickness),
+                        (offset + shapeSize * scaleFactor, offset + shapeSize * scaleFactor)], fill=color)
+
+
     else:
         raise ValueError(f"Unsupported shape: {shape}")
 
@@ -550,27 +600,35 @@ def bounding_boxes_overlap(x1, y1, w1, h1, x2, y2, w2, h2):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--colour", type=int, default=0)
+    parser.add_argument("-c", "--colour", type=int, default=None, help="Colour mode (use None to keep preset value)")
     parser.add_argument("-d", "--filename", required=True)
-    parser.add_argument("-dn", "--distractors", type=int, default=0)
-    parser.add_argument("-r", "--rotation", type=int, default=0)
-    parser.add_argument("-n", "--number", type=int, default=1000)
+    # Set default for distractors to None so we know if it was explicitly provided.
+    parser.add_argument("-dn", "--distractors", type=int, default=None, help="Override preset for max_k")
+    parser.add_argument("-r", "--rotation", type=int, default=None)
+    parser.add_argument("-n", "--number", type=int, default=None)
     parser.add_argument("-z", "--debug", dest="debug", action="store_true", help="Enable debug mode")
     parser.add_argument("--no-debug", dest="debug", action="store_false", help="Disable debug mode")
     parser.set_defaults(debug=False)
-    parser.add_argument("-pr", "--present", action="store_true", help="If set, each image has a 50% chance to have NO target present.")
-    parser.add_argument("-t", "--target")
-    parser.add_argument("-di", "--distractor")
-    parser.add_argument("-tc", "--targetColour")
-    parser.add_argument("-dc", "--distractorColour")
-    parser.add_argument("-s", "--size", type=int, default=20)
-    parser.add_argument("-q", "--quadrants", type=str, help="Specify the number of rows and columns as 'rows,cols'")
-    parser.add_argument("-qo", "--quadrantOrder", type=str, help="Specify the quadrant order as a comma-separated list of integers")
-    parser.add_argument("-p", "--preset")
+    parser.add_argument("-pr", "--present", action="store_true", help="Chance to have no target")
+    parser.add_argument("-t", "--target", default=None)
+    parser.add_argument("-di", "--distractor", default=None)
+    parser.add_argument("-tc", "--targetColour", default=None)
+    parser.add_argument("-dc", "--distractorColour", default=None)
+    parser.add_argument("-s", "--size", type=int, default=None)
+    parser.add_argument("-q", "--quadrants", type=str, default=None, help="Specify rows,cols")
+    parser.add_argument("-qo", "--quadrantOrder", type=str, default=None, help="Comma-separated list of quadrant integers")
+    parser.add_argument("-p", "--preset", default=None)
     parser.add_argument("-f", "--finetuning", action="store_true")
-    parser.add_argument("--conjunctive", action="store_true", help="Allow distractors to share the target’s shape or color (but not both).")
-
+    parser.add_argument("--conjunctive", action="store_true", help="Allow distractors to share target’s shape or color")
     parser.add_argument("--seed", type=int, default=int(time.time()), help="Random seed (default: current time)")
+    
+    # New colour mode options:
+    parser.add_argument("--colourMode", type=str, default="explicit",
+                        choices=["explicit", "randomDifferent", "randomSame"],
+                        help="Colour selection mode")
+    parser.add_argument("--colourList", type=str, default=None,
+                        help="Comma-separated list of hex colours for random colour modes")
+
     args = parser.parse_args()
 
 
@@ -594,181 +652,253 @@ if __name__ == '__main__':
     random.seed(args.seed)
     print(f"Using random seed: {args.seed}")
 
-    if args.preset == "2Among5Colour":
-        generate_images(
-            dir=args.filename,
-            num_images=args.number,
-            min_k=0,
-            max_k=99,
-            c=1, 
-            targetShape="2",
-            distractorShape="5",
-            shapeSize=20,
-            theta_min=0,
-            theta_max=360,
-            targetColour="#00FF00",
-            distractorColour="#0000FF",
-            quadrantOrder=[1,2,3,4],
-            debug=False
-        )
-    elif args.preset == "conjunctive":
-        generate_images(
-            dir=args.filename,
-            num_images=args.number,
-            min_k=0,
-            max_k=99,
-            c=1, 
-            targetShape="2",
-            distractorShape="5",
-            shapeSize=20,
-            theta_min=0,
-            theta_max=360,
-            targetColour="#00FF00",
-            distractorColour="#0000FF",
-            quadrantOrder=[1,2,3,4],
-            conjunctive=True,
-            debug=False)
-    elif args.preset == "2Among5ColourDn":
-        generate_images(
-            dir=args.filename,
-            num_images=args.number,
-            min_k=0,
-            max_k=args.distractors,
-            c=1, 
-            targetShape="2",
-            distractorShape="5",
-            shapeSize=20,
-            theta_min=0,
-            theta_max=360,
-            targetColour="#00FF00",
-            distractorColour="#0000FF",
-            quadrantOrder=[1,2,3,4],
-            debug=False
-        )
-    elif args.preset =="2Among5ColourPresent":
-        generate_images(
-            dir=args.filename,
-            num_images=args.number,
-            min_k=0,
-            max_k=99,
-            c=1, 
-            targetShape="2",
-            distractorShape="5",
-            shapeSize=20,
-            theta_min=0,
-            theta_max=360,
-            targetColour="#00FF00",
-            distractorColour="#0000FF",
-            quadrantOrder=[1,2,3,4],
-            debug=False,
-            present=True
-        )
-
-    elif args.preset == "2Among5NoColour":
-        generate_images(
-            dir=args.filename,
-            num_images=args.number,
-            min_k=0,
-            max_k=99,
-            c=0, 
-            targetShape="2",
-            distractorShape="5",
-            shapeSize=20,
-            theta_min=0,
-            theta_max=360,
-            targetColour="#00FF00",
-            distractorColour="",
-            quadrantOrder=[1,2,3,4],
-            debug=False
-        )
-    elif args.preset == "2Among5NoColourPresent":
-        generate_images(
-            dir=args.filename,
-            num_images=args.number,
-            min_k=0,
-            max_k=99,
-            c=0, 
-            targetShape="2",
-            distractorShape="5",
-            shapeSize=20,
-            theta_min=0,
-            theta_max=360,
-            targetColour="#00FF00",
-            distractorColour="",
-            quadrantOrder=[1,2,3,4],
-            debug=False,
-            present=True
-        )
-
-    elif args.preset == "2Among5NoColourDn":
-        generate_images(
-            dir=args.filename,
-            num_images=args.number,
-            min_k=0,
-            max_k=args.distractors,
-            c=0, 
-            targetShape="2",
-            distractorShape="5",
-            shapeSize=20,
-            theta_min=0,
-            theta_max=360,
-            targetColour="#00FF00",
-            distractorColour="",
-            quadrantOrder=[1,2,3,4],
-            debug=False
-        )
-
-
-    elif args.preset == "VerticalGradient":
-        generate_images(
-            dir=args.filename,
-            num_images=args.number,
-            min_k=0,
-            max_k=49,
-            c=0, 
-            targetShape="circle_gradient_top_bottom",
-            distractorShape="circle_gradient_bottom_top",
-            shapeSize=30,
-            theta_min=0,
-            theta_max=0,
-            targetColour="#000000",
-            distractorColour="",   
-            quadrantOrder=[1,2,3,4], 
-            debug=False
-        )
-    elif args.preset == "HorizontalGradient":
-        generate_images(
-            dir=args.filename,
-            num_images=args.number,
-            min_k=0,
-            max_k=49,
-            c=0, 
-            targetShape="circle_gradient_top_bottom",
-            distractorShape="circle_gradient_bottom_top",
-            shapeSize=30,
-            theta_min=90,
-            theta_max=90,
-            targetColour="#000000",
-            distractorColour="",
-            quadrantOrder=[1,2,3,4], 
-            debug=False
-        )
+    
+    # Define presets as a dictionary.
+    presets = {
+        "2Among5Colour": {
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": 99,
+            "c": 1,
+            "targetShape": "2",
+            "distractorShape": "5",
+            "shapeSize": 20,
+            "theta_min": 0,
+            "theta_max": 360,
+            "targetColour": "#00FF00",
+            "distractorColour": "#0000FF",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+        },
+        "conjunctive": {
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": 99,
+            "c": 1,
+            "targetShape": "2",
+            "distractorShape": "5",
+            "shapeSize": 20,
+            "theta_min": 0,
+            "theta_max": 360,
+            "targetColour": "#00FF00",
+            "distractorColour": "#0000FF",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": True,
+        },
+        "2Among5ColourDn": {
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": args.distractors if args.distractors is not None else 99,
+            "c": 1,
+            "targetShape": "2",
+            "distractorShape": "5",
+            "shapeSize": 20,
+            "theta_min": 0,
+            "theta_max": 360,
+            "targetColour": "#00FF00",
+            "distractorColour": "#0000FF",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+        },
+        "2Among5ColourPresent": {
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": 99,
+            "c": 1,
+            "targetShape": "2",
+            "distractorShape": "5",
+            "shapeSize": 20,
+            "theta_min": 0,
+            "theta_max": 360,
+            "targetColour": "#00FF00",
+            "distractorColour": "#0000FF",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": True,
+            "conjunctive": False,
+        },
+        "2Among5NoColour": {
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": 99,
+            "c": 0,
+            "targetShape": "2",
+            "distractorShape": "5",
+            "shapeSize": 20,
+            "theta_min": 0,
+            "theta_max": 360,
+            "targetColour": "#00FF00",
+            "distractorColour": "",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+        },
+        "2Among5NoColourPresent": {
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": 99,
+            "c": 0,
+            "targetShape": "2",
+            "distractorShape": "5",
+            "shapeSize": 20,
+            "theta_min": 0,
+            "theta_max": 360,
+            "targetColour": "#00FF00",
+            "distractorColour": "",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": True,
+            "conjunctive": False,
+        },
+        "2Among5NoColourDn": {
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": args.distractors if args.distractors is not None else 99,
+            "c": 0,
+            "targetShape": "2",
+            "distractorShape": "5",
+            "shapeSize": 20,
+            "theta_min": 0,
+            "theta_max": 360,
+            "targetColour": "#00FF00",
+            "distractorColour": "",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+        },
+        "VerticalGradient": {
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": 49,
+            "c": 0,
+            "targetShape": "circle_gradient_top_bottom",
+            "distractorShape": "circle_gradient_bottom_top",
+            "shapeSize": 30,
+            "theta_min": 0,
+            "theta_max": 0,
+            "targetColour": "#000000",
+            "distractorColour": "",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+        },
+        "HorizontalGradient": {
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": 49,
+            "c": 0,
+            "targetShape": "circle_gradient_top_bottom",
+            "distractorShape": "circle_gradient_bottom_top",
+            "shapeSize": 30,
+            "theta_min": 90,
+            "theta_max": 90,
+            "targetColour": "#000000",
+            "distractorColour": "",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+        },
+        # New TandL preset:
+        "TandL": {
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": 10,
+            "c": 1,
+            "targetShape": "T",
+            "distractorShape": "L",
+            "shapeSize": 20,
+            "theta_min": 0,
+            "theta_max": 360,
+            "targetColour": "#00FF00",
+            "distractorColour": "#0000FF",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+        }
+    }
+    
+    # If a preset is specified and exists, start with that configuration.
+    # Otherwise, use a default configuration based on the flags.
+    if args.preset and args.preset in presets:
+            config = presets[args.preset].copy()
     else:
-        generate_images(
-            dir=args.filename,
-            num_images=args.number,
-            min_k=0,
-            max_k=args.distractors,
-            c=args.colour,
-            targetShape=args.target,
-            distractorShape=args.distractor,
-            shapeSize=args.size,
-            theta_min=0,
-            theta_max=args.rotation,
-            targetColour=args.targetColour,
-            distractorColour=args.distractorColour,
-            grid_cols=grid_cols,
-            grid_rows=grid_rows,
-            quadrantOrder=quadrantOrder,
-            debug=args.debug
-        )
+        config = {
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": args.distractors if args.distractors is not None else 99,
+            "c": args.colour if args.colour is not None else 0,
+            "targetShape": args.target if args.target is not None else "2",
+            "distractorShape": args.distractor if args.distractor is not None else "5",
+            "shapeSize": args.size if args.size is not None else 20,
+            "theta_min": 0,
+            "theta_max": args.rotation if args.rotation is not None else 360,
+            "targetColour": args.targetColour if args.targetColour is not None else "#00FF00",
+            "distractorColour": args.distractorColour if args.distractorColour is not None else "#0000FF",
+            "quadrantOrder": quadrantOrder,
+            "debug": args.debug,
+            "present": args.present,
+            "conjunctive": args.conjunctive,
+            "colourMode": args.colourMode if args.colourMode is not None else "explicit"
+        }
+
+    # Override preset values with any command-line flags (if not None):
+    overrides = {}
+    if args.number is not None:
+        overrides["num_images"] = args.number
+    if args.distractors is not None:
+        overrides["max_k"] = args.distractors
+    if args.colour is not None:
+        overrides["c"] = args.colour
+    if args.target is not None:
+        overrides["targetShape"] = args.target
+    if args.distractor is not None:
+        overrides["distractorShape"] = args.distractor
+    if args.size is not None:
+        overrides["shapeSize"] = args.size
+    if args.rotation is not None:
+        overrides["theta_max"] = args.rotation
+    if args.targetColour is not None:
+        overrides["targetColour"] = args.targetColour
+    if args.distractorColour is not None:
+        overrides["distractorColour"] = args.distractorColour
+    if args.debug is not None:
+        overrides["debug"] = args.debug
+    if args.present:
+        overrides["present"] = args.present
+    if args.conjunctive:
+        overrides["conjunctive"] = args.conjunctive
+
+    for key, value in overrides.items():
+        if value is not None:
+            config[key] = value
+
+    # Add grid configuration:
+    config["grid_cols"] = grid_cols
+    config["grid_rows"] = grid_rows
+    config["quadrantOrder"] = quadrantOrder
+
+    # Pass through the new colour mode parameters:
+    config["colourMode"] = args.colourMode
+    config["colourList"] = [c.strip() for c in args.colourList.split(",")] if args.colourList else None
+
+    # Set the output directory based on finetuning flag:
+    if args.finetuning:
+        config["dir"] =  args.filename
+    else:
+        config["dir"] =  args.filename
+
+
+    print(config)
+    # Finally, call generate_images with the complete configuration:
+    generate_images(**config)
