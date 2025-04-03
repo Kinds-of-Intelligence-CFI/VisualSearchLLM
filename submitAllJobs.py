@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     print(args.prompt)
 
-    if args.distractors == -1:
+    if not args.distractors == -1:
         distractorArgs = ["-dn", str(args.distractors)]
     else:
         distractorArgs = []
