@@ -23,7 +23,7 @@ if __name__ == '__main__':
         distractorArgs = ["-dn", str(args.distractors)]
     else:
         distractorArgs = []
-    subprocess.run(["python3", "generateImages.py", "-d", args.directory, "-n", str(args.number), "-p", args.preset, "--seed", args.seed]+distractorArgs)
+    subprocess.run(["python3", "generateImages.py", "-d", args.directory, "-n", str(args.number), "-p", args.preset, "--seed", str(args.seed)]+distractorArgs)
     if args.gpt4o:
         subprocess.run(["python3", "createBatch.py", "-d", args.directory, "-m", "gpt-4o", "-p", args.prompt])
         subprocess.run(["python3", "submitBatch.py", "-d", args.directory, "-m", "gpt-4o"])
