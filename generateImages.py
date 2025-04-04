@@ -672,6 +672,85 @@ if __name__ == '__main__':
             "present": False,
             "conjunctive": False,
         },
+        "2Among5ColourRand":{        
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": 99,
+            "c": 1,
+            "targetShape": "2",
+            "distractorShape": "5",
+            "shapeSize": 20,
+            "theta_min": 0,
+            "theta_max": 360,
+            "targetColour": "#00FF00",
+            "distractorColour": "#0000FF",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+            "colourMode": "randomDifferent",
+            "colourList": ["#FF0000", "#00FF00", "#0000FF"]
+        },
+        "2Among5NoColourRand":{        
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": 99,
+            "c": 1,
+            "targetShape": "2",
+            "distractorShape": "5",
+            "shapeSize": 20,
+            "theta_min": 0,
+            "theta_max": 360,
+            "targetColour": "#00FF00",
+            "distractorColour": "#0000FF",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+            "colourMode": "randomSame",
+            "colourList": ["#FF0000", "#00FF00", "#0000FF"]
+        },
+
+        "5Among2ColourRand":{        
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": 99,
+            "c": 1,
+            "targetShape": "5",
+            "distractorShape": "2",
+            "shapeSize": 20,
+            "theta_min": 0,
+            "theta_max": 360,
+            "targetColour": "#00FF00",
+            "distractorColour": "#0000FF",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+            "colourMode": "randomDifferent",
+            "colourList": ["#FF0000", "#00FF00", "#0000FF"]
+        },
+
+        "5Among2NoColourRand":{        
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": 99,
+            "c": 1,
+            "targetShape": "5",
+            "distractorShape": "2",
+            "shapeSize": 20,
+            "theta_min": 0,
+            "theta_max": 360,
+            "targetColour": "#00FF00",
+            "distractorColour": "#0000FF",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+            "colourMode": "randomSame",
+            "colourList": ["#FF0000", "#00FF00", "#0000FF"]
+        },
+
         "conjunctive": {
             "num_images": args.number if args.number is not None else 1000,
             "min_k": 0,
@@ -882,7 +961,8 @@ if __name__ == '__main__':
             "debug": args.debug,
             "present": args.present,
             "conjunctive": args.conjunctive,
-            "colourMode": args.colourMode if args.colourMode is not None else "explicit"
+            "colourMode": args.colourMode if args.colourMode is not None else "explicit",
+            "colourList": args.colourList if args.colourList is not None else None
         }
 
     # Override preset values with any command-line flags (if not None):
@@ -911,7 +991,10 @@ if __name__ == '__main__':
         overrides["present"] = args.present
     if args.conjunctive:
         overrides["conjunctive"] = args.conjunctive
-
+    if args.colourMode != "explicit":
+        overrides["colourMode"]=args.colourMode
+        overrides["colourList"]=[c.strip() for c in args.colourList.split(",")]
+    #overrides["seed"] = args.seed
     for key, value in overrides.items():
         if value is not None:
             config[key] = value
@@ -922,8 +1005,8 @@ if __name__ == '__main__':
     config["quadrantOrder"] = quadrantOrder
 
     # Pass through the new colour mode parameters:
-    config["colourMode"] = args.colourMode
-    config["colourList"] = [c.strip() for c in args.colourList.split(",")] if args.colourList else None
+   # config["colourMode"] = args.colourMode
+   # config["colourList"] = [c.strip() for c in args.colourList.split(",")] if args.colourList else None
 
     # Set the output directory based on finetuning flag:
     if args.finetuning:
