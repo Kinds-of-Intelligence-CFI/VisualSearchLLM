@@ -14,6 +14,7 @@ if __name__ == '__main__':
     parser.add_argument("-g", "--gpt4o", action="store_true")
     parser.add_argument("-c", "--claude", action="store_true")
     parser.add_argument("-l", "--llama", action="store_true")
+    parser.add_argument("--seed", type=int, default=42)
     args=parser.parse_args()
 
     print(args.prompt)
@@ -22,7 +23,7 @@ if __name__ == '__main__':
         distractorArgs = ["-dn", str(args.distractors)]
     else:
         distractorArgs = []
-    subprocess.run(["python3", "generateImages.py", "-d", args.directory, "-n", str(args.number), "-p", args.preset]+distractorArgs)
+    subprocess.run(["python3", "generateImages.py", "-d", args.directory, "-n", str(args.number), "-p", args.preset, "--seed", args.seed]+distractorArgs)
     if args.gpt4o:
         subprocess.run(["python3", "createBatch.py", "-d", args.directory, "-m", "gpt-4o", "-p", args.prompt])
         subprocess.run(["python3", "submitBatch.py", "-d", args.directory, "-m", "gpt-4o"])
