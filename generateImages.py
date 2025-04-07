@@ -13,6 +13,7 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
     width, height = 400, 400  # You can adjust the size as needed
 
 
+
     # Generate quadrants based on grid dimensions and quadrantOrder
     num_quadrants = grid_rows * grid_cols
 
@@ -711,6 +712,26 @@ if __name__ == '__main__':
             "colourList": ["#FF0000", "#00FF00", "#0000FF"]
         },
 
+        "2Among5ConjRand":{        
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": 99,
+            "c": 1,
+            "targetShape": "2",
+            "distractorShape": "5",
+            "shapeSize": 20,
+            "theta_min": 0,
+            "theta_max": 360,
+            "targetColour": "#00FF00",
+            "distractorColour": "#0000FF",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": True,
+            "colourMode": "randomDifferent",
+            "colourList": ["#FF0000", "#00FF00", "#0000FF"]
+        },
+
         "5Among2ColourRand":{        
             "num_images": args.number if args.number is not None else 1000,
             "min_k": 0,
@@ -727,6 +748,26 @@ if __name__ == '__main__':
             "debug": False,
             "present": False,
             "conjunctive": False,
+            "colourMode": "randomDifferent",
+            "colourList": ["#FF0000", "#00FF00", "#0000FF"]
+        },
+
+        "5Among2ConjRand":{        
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": 99,
+            "c": 1,
+            "targetShape": "5",
+            "distractorShape": "2",
+            "shapeSize": 20,
+            "theta_min": 0,
+            "theta_max": 360,
+            "targetColour": "#00FF00",
+            "distractorColour": "#0000FF",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": True,
             "colourMode": "randomDifferent",
             "colourList": ["#FF0000", "#00FF00", "#0000FF"]
         },
