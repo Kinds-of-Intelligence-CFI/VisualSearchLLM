@@ -11,9 +11,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--directory")
 parser.add_argument("-p", "--prompt")
 parser.add_argument("-f", "--finetuning", action='store_true', help="Create Finetuning batch")
-parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "llama11B", "llama90B", "llamaLocal"}, required=True)
+parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "llama11B", "llama90B", "llamaLocal", "gpt-4-turbo"}, required=True)
 parser.add_argument("-fmn", "--finetuned_model_name", default=None)
 args = parser.parse_args()
+
+
+colourMap = {"#FF0000": "red", "#00FF00":"green", "#0000FF":"blue"}
 
 
 if args.finetuning:
@@ -41,7 +44,7 @@ image_filenames.sort(key=lambda x: int(x.split('_')[1].split('.')[0]))
 batch_requests = []
 
 
-if args.model == "gpt-4o":
+if args.model in["gpt-4o", "gpt-4-turbo"]:
     batch_limit=2500
 elif args.model == "claude-sonnet":
     batch_limit = 500
@@ -58,6 +61,16 @@ if args.finetuned_model_name is not None:
 for filename in tqdm(image_filenames, desc='Processing images'):
     image_path = os.path.join(directory, filename)
 
+    targets = annotations[(annotations["filename"] == filename) & (annotations["target"] == True)]
+    if targets.empty:
+        targetColour=None
+        targetShape=None
+    else:
+        targetColour = colourMap[targets["color"].iloc[0]]
+        targetShape = targets["shape_type"].iloc[0]
+    #print(targetColour, targetShape)
+    #print(list(annotations[(annotations["filename"] == filename) & (annotations["target"] == True)]["target"])==[])
+
     # Encode the image to Base64
     base64_image = encode_image(image_path)
 
@@ -71,7 +84,7 @@ for filename in tqdm(image_filenames, desc='Processing images'):
     # Create the batch request JSON object
 
     if args.finetuning and args.model == "gpt-4o":
-        batch_request = {"messages": constructMessage(args.prompt, "2", base64_image, args.model, args.finetuning, cell)}
+        batch_request = {"messages": constructMessage(args.prompt, targetShape, targetColour, base64_image, args.model, args.finetuning, cell)}
     elif args.finetuning:
         raise ValueError("Fine tuning not implemented for models other than GPT-4o")
 
@@ -83,7 +96,20 @@ for filename in tqdm(image_filenames, desc='Processing images'):
             "body": {
                 # Default to the most recent snapshot at the time of writing that supports fine tuning
                 "model": "gpt-4o-2024-08-06" if args.finetuned_model_name is None else args.finetuned_model_name,
-                "messages": constructMessage(args.prompt, "2", base64_image, args.model, args.finetuning, cell),
+                "messages": constructMessage(args.prompt, targetShape, targetColour, base64_image, args.model, args.finetuning, cell),
+                "temperature": 0.0,
+                "max_tokens": 1000
+            }
+        }
+    elif args.model =="gpt-4-turbo":
+        batch_request = {
+            "custom_id": filename,  # Use the filename as the custom_id
+            "method": "POST",
+            "url": "/v1/chat/completions",
+            "body": {
+                # Default to the most recent snapshot at the time of writing that supports fine tuning
+                "model": "gpt-4-turbo-2024-04-09",
+                "messages": constructMessage(args.prompt, targetShape, targetColour, base64_image, args.model, args.finetuning, cell),
                 "temperature": 0.0,
                 "max_tokens": 1000
             }
@@ -95,20 +121,20 @@ for filename in tqdm(image_filenames, desc='Processing images'):
             "model": "claude-3-5-sonnet-20241022",
             "max_tokens": 128,
             "system": "You are an AI assistant that can analyze images and answer questions about them.",
-            "messages": constructMessage(args.prompt, "2", base64_image, args.model)
+            "messages": constructMessage(args.prompt, targetShape, targetColour, base64_image, args.model)
             }
 
         }
     elif args.model == "llama11B" or args.model=="llama90B":
         batch_request = {
         "custom_id": filename,
-        "messages": constructMessage(args.prompt, "2", base64_image, args.model)
+        "messages": constructMessage(args.prompt, targetShape, targetColour, base64_image, args.model)
         }
 
     elif args.model == "llamaLocal":
         batch_request = {
         "custom_id": filename,
-        "messages": constructMessage(args.prompt, "2", base64_image, args.model)
+        "messages": constructMessage(args.prompt, targetShape, targetColour, base64_image, args.model)
         }
 
 

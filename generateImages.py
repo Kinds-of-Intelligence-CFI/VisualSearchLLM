@@ -238,9 +238,11 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                 
                 def get_random_multifeature_combo():
                     while True:
+                        #print("random select")
                         s = random.choice(possible_shapes)
                         c = random.choice(possible_colors)
                         # Exclude the exact combination = (targetShape, targetColour)
+                        #print(s,c)
                         if not (s == targetShape and c == ImageColor.getrgb(currentTargetColour)):
                             return s, c
 
@@ -279,7 +281,7 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                         distractor_color_bin_index = None  # or some placeholder
 
                     else:
-
+                        distractor_shape = distractorShape
 
                         # Determine distractor color
                         if c == -1:
@@ -330,7 +332,7 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                                 distractor_color_hex = '#%02x%02x%02x' % distractor_color
 
                     # Draw the distractor shape and get the image
-                    distractor_shape_image = draw_shape(canvas_size, shapeSize, distractorShape, distractor_color)
+                    distractor_shape_image = draw_shape(canvas_size, shapeSize, distractor_shape, distractor_color)
 
                     # Rotate the distractor shape without expanding the canvas
                     distractor_shape_image = distractor_shape_image.rotate(-distractor_rotation, expand=False, resample=Image.BICUBIC)
@@ -359,7 +361,7 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                     if not overlap:
                         # No overlap, accept the distractor
                         occupied_areas.append({
-                            'type': distractorShape,
+                            'type': distractor_shape,
                             'x': adjusted_distractor_x,
                             'y': adjusted_distractor_y,
                             'size': canvas_size  # Use canvas_size for width and height
@@ -414,7 +416,7 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                 filename=f'image_{i}.png'
                 writer.writerow({
                     'filename': filename,
-                    'shape_type': distractorShape,
+                    'shape_type': distractor_shape,
                     'target': False,
                     'center_x': distractor_center_x,
                     'center_y': distractor_center_y,
