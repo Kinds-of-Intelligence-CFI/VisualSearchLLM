@@ -62,8 +62,12 @@ for filename in tqdm(image_filenames, desc='Processing images'):
     image_path = os.path.join(directory, filename)
 
     targets = annotations[(annotations["filename"] == filename) & (annotations["target"] == True)]
-    targetColour = colourMap[targets["color"].iloc[0]]
-    targetShape = targets["shape_type"].iloc[0]
+    if targets.empty:
+        targetColour=None
+        targetShape=None
+    else:
+        targetColour = colourMap[targets["color"].iloc[0]]
+        targetShape = targets["shape_type"].iloc[0]
     #print(targetColour, targetShape)
     #print(list(annotations[(annotations["filename"] == filename) & (annotations["target"] == True)]["target"])==[])
 
