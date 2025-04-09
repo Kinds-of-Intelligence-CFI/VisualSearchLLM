@@ -104,12 +104,12 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
 
             # Extract the custom_id and response data
             custom_id = response_entry.get('custom_id')
-            if model == "claude-sonnet":
+            if model in ["claude-sonnet", "claude-haiku"]:
                 custom_id += ".png"
 
-            if model == "gpt-4o":
+            if model in ["gpt-4o", "gpt-4-turbo"]:
                 response_data = response_entry.get('response')
-            elif model == "claude-sonnet":
+            elif model in ["claude-sonnet", "claude-haiku"]:
                 response_data = response_entry.get("result")
             elif model in {"llama11B", "llama90B"}:
                 response_data = response_entry.get("content")
@@ -160,9 +160,9 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
             elif response_data is not None:
                 # Extract LLM's response
                 try:
-                    if model == "gpt-4o":
+                    if model in ["gpt-4o", "gpt-4-turbo"]:
                         assistant_message = response_data['body']['choices'][0]['message']['content'].strip()
-                    elif model == "claude-sonnet":
+                    elif model in ["claude-sonnet", "claude-haiku"]:
                         assistant_message = response_data['message']['content'][0]["text"]
                     elif model in {"llama11B", "llama90B"}:
                         assistant_message = response_data
@@ -398,7 +398,7 @@ def main():
     group.add_argument("-rc", "--rowsColumns", action='store_true', help="Rows and Columns mode")
     group.add_argument("-q", "--quadrants", action="store_true", help="Quadrant mode")
     group.add_argument("-p", "--presence", action="store_true", help="Presence mode")
-    parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "llama11B", "llama90B"}, required=True)
+    parser.add_argument("-m", "--model", choices={"gpt-4o", "gpt-4-turbo", "claude-sonnet", "claude-haiku", "llama11B", "llama90B"}, required=True)
     args = parser.parse_args()
 
     mode_mapping = [

@@ -17,7 +17,7 @@ def constructMessage(writing, shape, colour, image, model, finetuning=False, sol
               }
     message = []
 
-    if model == "gpt-4o" or "llama" in model:
+    if model in ["gpt-4o", "gpt-4-turbo"] or "llama" in model:
         message.append({"role": "system", "content": "You are an AI assistant that can analyze images and answer questions about them."})
 
 
@@ -33,9 +33,9 @@ def constructMessage(writing, shape, colour, image, model, finetuning=False, sol
     content.append({"type": "text", "text": prompts[writing]})
 
 
-    if model =="gpt-4o" or model=="llama11B" or model=="llama90B":
+    if model in ["gpt-4o", "gpt-4-turbo"] or model=="llama11B" or model=="llama90B":
         content.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image}"}})
-    elif model == "claude-sonnet":
+    elif model in ["claude-sonnet", "claude-haiku"]:
         content.append({"type": "image", "source": {"type": "base64", "media_type":"image/png", "data":image}})
     elif model == "llamaLocal":
         pass

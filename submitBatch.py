@@ -7,16 +7,16 @@ import json
 # Argument parser for directory
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--directory")
-parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet"}, required=True)
+parser.add_argument("-m", "--model", choices={"gpt-4o", "gpt-4-turbo", "claude-sonnet", "claude-haiku"}, required=True)
 parser.add_argument("-f", "--finetuning", action='store_true', help="Batch is for fine tuning")
 args = parser.parse_args()
 
 directory=("finetuning/" if args.finetuning else "results/")+args.directory
 
 # Initialize client
-if args.model == "gpt-4o":
+if args.model in ["gpt-4o", "gpt-4-turbo"]:
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-elif args.model == "claude-sonnet":
+elif args.model in ["claude-sonnet", "claude-haiku"]:
     client = anthropic.Anthropic(api_key = os.getenv("ANTHROPIC_API_KEY"))
 else:
     raise ValueError("Invalid model type!")
@@ -58,7 +58,7 @@ with open(batchid_file_path, "w") as batchid_file:
             # Check the job was created successfully
             print("-- Fine tuning jobs --")
             print(client.fine_tuning.jobs.list(limit=10))
-        elif args.model =="gpt-4o":
+        elif args.model in ["gpt-4o", "gpt-4-turbo"]:
             # Create input file in OpenAI
             batch_input_file = client.files.create(
                 file=open(batch_file_path, "rb"),
@@ -77,7 +77,7 @@ with open(batchid_file_path, "w") as batchid_file:
                     "description": "Visual Search"
                 }
             )
-        elif args.model =="claude-sonnet":
+        elif args.model in ["claude-sonnet", "claude-haiku"]:
             with open(batch_file_path, 'r') as file:
                 batch=[]
                 for line in file:

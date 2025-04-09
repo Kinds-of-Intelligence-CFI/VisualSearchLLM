@@ -12,7 +12,9 @@ if __name__ == '__main__':
     parser.add_argument("-pr", "--preset", required=True)
     parser.add_argument("-p", "--prompt", required=True)
     parser.add_argument("-g", "--gpt4o", action="store_true")
-    parser.add_argument("-c", "--claude", action="store_true")
+    parser.add_argument("-g4", "--gpt4turbo", action="store_true")
+    parser.add_argument("-cs", "--claudesonnet", action="store_true")
+    parser.add_argument("-ch", "--claudesonnet", action="store_true")
     parser.add_argument("-l", "--llama", action="store_true")
     parser.add_argument("--seed", type=int, default=42)
     args=parser.parse_args()
@@ -27,9 +29,15 @@ if __name__ == '__main__':
     if args.gpt4o:
         subprocess.run(["python3", "createBatch.py", "-d", args.directory, "-m", "gpt-4o", "-p", args.prompt])
         subprocess.run(["python3", "submitBatch.py", "-d", args.directory, "-m", "gpt-4o"])
-    if args.claude:
+    if args.gpt4turbo:
+        subprocess.run(["python3", "createBatch.py", "-d", args.directory, "-m", "gpt-4-turbo", "-p", args.prompt])
+        subprocess.run(["python3", "submitBatch.py", "-d", args.directory, "-m", "gpt-4-turbo"])
+    if args.claudesonnet:
         subprocess.run(["python3", "createBatch.py", "-d", args.directory, "-m", "claude-sonnet", "-p", args.prompt])
         subprocess.run(["python3", "submitBatch.py", "-d", args.directory, "-m", "claude-sonnet"])
+    if args.claudehaiku:
+        subprocess.run(["python3", "createBatch.py", "-d", args.directory, "-m", "claude-haiku", "-p", args.prompt])
+        subprocess.run(["python3", "submitBatch.py", "-d", args.directory, "-m", "claude-haiku"])
     if args.llama:
         subprocess.run(["python3", "createBatch.py", "-d", args.directory, "-m", "llamaLocal", "-p", args.prompt])
         subprocess.run(["python3", "submitHPCBatch.py", "-d", args.directory, "-m", "llama11B"])

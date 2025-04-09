@@ -7,7 +7,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--directory", required=True)
     parser.add_argument("-g", "--gpt4o", action="store_true")
-    parser.add_argument("-c", "--claude", action="store_true")
+    parser.add_argument("-gt", "--gpt4turbo", action="store_true")
+    parser.add_argument("-cs", "--claudesonnet", action="store_true")
+    parser.add_argument("-ch", "--claudehaiku", action="store_true")
     parser.add_argument("-l", "--llama", action="store_true")
     parser.add_argument("-rc", "--rowsandcolumns", action="store_true")
     parser.add_argument("-q", "--quadrants", action="store_true")
@@ -28,9 +30,14 @@ if __name__ == '__main__':
  
     if args.gpt4o:
         subprocess.run(["python3", "processBatchResults.py", "-d", args.directory, "-m", "gpt-4o", processFlag])
-    if args.claude:
+    if args.gpt4turbo:
+        subprocess.run(["python3", "processBatchResults.py", "-d", args.directory, "-m", "gpt-4-turbo", processFlag])
+    if args.claudesonnet:
         subprocess.run(["python3", "processBatchResults.py", "-d", args.directory, "-m", "claude-sonnet", processFlag])
   
+    if args.claudehaiku:
+        subprocess.run(["python3", "processBatchResults.py", "-d", args.directory, "-m", "claude-haiku", processFlag])
+
     if args.llama:
         subprocess.run(["python3", "combineLlama.py", "-d", args.directory, "-m", "llama11B"])
         subprocess.run(["python3", "processBatchResults.py", "-d", args.directory, "-m", "llama11B", processFlag])
