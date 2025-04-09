@@ -70,7 +70,7 @@ def main():
     # Set batch limits
     if args.model in {"gpt-4o", "gpt-4-turbo"}:
         batch_limit = 2500
-    elif args.model == "claude-sonnet":
+    elif args.model in ["claude-sonnet", "claude-haiku"]:
         batch_limit = 500
     else:
         batch_limit = 5000
