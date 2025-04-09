@@ -6,7 +6,7 @@ from constructMessage import constructMessage
 import argparse
 import pandas as pd
 
-colourMap = {"#FF0000": "red", "#00FF00": "green", "#0000FF": "blue"}
+colourMap = {"#FF0000": "red", "#00FF00": "green", "#0000FF": "blue", "#000000":"black"}
 
 def encode_image(image_path):
     """Encodes the image at image_path to Base64."""
@@ -148,9 +148,7 @@ def main():
                         targetShape,
                         targetColour,
                         base64_image,
-                        args.model,
-                        finetuning=args.finetuning,
-                        cell=cell
+                        args.model
                     ),
                     "temperature": 0.0,
                     "max_tokens": 1000
@@ -168,9 +166,7 @@ def main():
                         targetShape,
                         targetColour,
                         base64_image,
-                        args.model,
-                        finetuning=args.finetuning,
-                        cell=cell
+                        args.model
                     ),
                     "temperature": 0.0,
                     "max_tokens": 1000
