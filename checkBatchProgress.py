@@ -38,15 +38,15 @@ def extract_relevant_data(result):
 # Argument parser for directory
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--directory")
-parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet"}, required=True)
+parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "gpt-4-turbo", "claude-haiku"}, required=True)
 args = parser.parse_args()
 
 directory="results/"+args.directory
 
 # Initialize OpenAI client
-if args.model == "gpt-4o":
+if args.model in ["gpt-4o", "gpt-4-turbo"]:
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-elif args.model == "claude-sonnet":
+elif args.model in ["claude-sonnet", "claude-haiku"]:
     client = anthropic.Anthropic(api_key = os.getenv("ANTHROPIC_API_KEY"))
 else:
     raise ValueError("Invalid model type!")
@@ -60,7 +60,7 @@ with open(batchid_file_path, "r") as batchid_file:
 all_batches_completed = True
 
 for batch_id in batch_ids:
-    if args.model=="gpt-4o":
+    if args.model in ["gpt-4o", "gpt-4-turbo"]:
         batch_info = client.batches.retrieve(batch_id)
         if not batch_info.status == "completed":
             print(f"Batch {batch_id} is still in progress: Completed {batch_info.request_counts.completed}/{batch_info.request_counts.total}")
@@ -71,7 +71,7 @@ for batch_id in batch_ids:
             print(f"Batch {batch_id} status: {batch_info.status}")
             print(batch_info)
 
-    elif args.model=="claude-sonnet":
+    elif args.model in ["claude-sonnet", "claude-haiku"]:
         batch_info=client.beta.messages.batches.retrieve(batch_id)
         if not batch_info.processing_status=="ended":
             all_batches_completed = False
@@ -92,7 +92,7 @@ output_file_path = os.path.join(directory, args.model+"_combined_batch_responses
 with open(output_file_path, "w", encoding="utf-8") as combined_file:
     for batch_id in batch_ids:
         # Retrieve batch info
-        if args.model=="gpt-4o":
+        if args.model in ["gpt-4o", "gpt-4-turbo"]:
             batch_info = client.batches.retrieve(batch_id)
             # Check the output file ID and download the content
             file_id = batch_info.output_file_id
@@ -102,7 +102,7 @@ with open(output_file_path, "w", encoding="utf-8") as combined_file:
             combined_file.write(file_response.text + "\n")
             print(f"Results from batch {batch_id} appended to {output_file_path}")
 
-        elif args.model=="claude-sonnet":
+        elif args.model in ["claude-sonnet", "claude-haiku"]:
 
             results = client.beta.messages.batches.results(batch_id)
             for result in results:
