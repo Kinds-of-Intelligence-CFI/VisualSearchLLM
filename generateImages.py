@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw, ImageColor
 
 def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorShape, 
                     shapeSize, theta_min, theta_max, targetColour, distractorColour, conjunctive=False,
-                    grid_rows=2, grid_cols=2, quadrantOrder=None, debug=False, present=False, colourMode="explicit", colourList=None):
+                    grid_rows=2, grid_cols=2, targetSize=None, quadrantOrder=None, debug=False, present=False, colourMode="explicit", colourList=None):
     # Set image dimensions
     width, height = 400, 400  # You can adjust the size as needed
 
@@ -97,25 +97,27 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
 
             occupied_areas = []
 
-            # Adjust the canvas size to accommodate the rotated shape
-            padding = shapeSize * 0.05  # Existing padding
-            canvas_size = shapeSize + 2*padding
-
-            # Generate random position for the target's center within the main image
-            max_center_x = width - canvas_size / 2
-            max_center_y = height - canvas_size / 2
-            min_center_x = canvas_size / 2
-            min_center_y = canvas_size / 2
+           
 
             if targetPresent:
 
+
+                # Adjust the canvas size to accommodate the rotated shape
+                actualTargetSize = targetSize if targetSize is not None else shapeSize
+
+                targetPadding = actualTargetSize * 0.05  # Existing padding
+                targetCanvasSize = actualTargetSize+ 2*targetPadding
+
+                # Generate random position for the target's center within the main image
+                target_max_center_x = width - targetCanvasSize / 2
+                target_max_center_y = height - targetCanvasSize / 2
+                target_min_center_x = targetCanvasSize / 2
+                target_min_center_y = targetCanvasSize / 2
+
                 # Random rotation angle for the target
                 target_rotation = random.uniform(theta_min, theta_max)
-
-                
-
-                target_center_x = random.uniform(min_center_x, max_center_x)
-                target_center_y = random.uniform(min_center_y, max_center_y)
+                target_center_x = random.uniform(target_min_center_x, target_max_center_x)
+                target_center_y = random.uniform(target_min_center_y, target_max_center_y)
 
                 # Determine target color
                 if c == -1:
@@ -136,22 +138,22 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                     target_color_bin_index = 0  # Since the target is targetColour
 
                 # Draw the target shape and get the image
-                target_shape_image = draw_shape(canvas_size, shapeSize, targetShape, target_color)
+                target_shape_image = draw_shape(targetCanvasSize, actualTargetSize, targetShape, target_color)
 
                 # Rotate the target shape without expanding the canvas
                 target_shape_image = target_shape_image.rotate(-target_rotation, expand=False, resample=Image.BICUBIC)
 
                 # Adjust position to keep shape within image boundaries
-                adjusted_target_x = target_center_x - canvas_size / 2
-                adjusted_target_y = target_center_y - canvas_size / 2
+                adjusted_target_x = target_center_x - targetCanvasSize / 2
+                adjusted_target_y = target_center_y - targetCanvasSize / 2
 
                 # Ensure the shape is within the image boundaries
-                adjusted_target_x = min(max(adjusted_target_x, 0), width - canvas_size)
-                adjusted_target_y = min(max(adjusted_target_y, 0), height - canvas_size)
+                adjusted_target_x = min(max(adjusted_target_x, 0), width - targetCanvasSize)
+                adjusted_target_y = min(max(adjusted_target_y, 0), height - targetCanvasSize)
 
                 # Update the center coordinates after adjustments
-                target_center_x = adjusted_target_x + canvas_size / 2
-                target_center_y = adjusted_target_y + canvas_size / 2
+                target_center_x = adjusted_target_x + targetCanvasSize / 2
+                target_center_y = adjusted_target_y + targetCanvasSize / 2
 
                 # Paste the rotated shape onto the main image
                 image.paste(target_shape_image, (int(adjusted_target_x), int(adjusted_target_y)), target_shape_image)
@@ -159,7 +161,7 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                 # If debug is True, draw the bounding box and center cross around the target
                 if debug:
                     image_draw = ImageDraw.Draw(image)
-                    bbox_draw = [adjusted_target_x, adjusted_target_y, adjusted_target_x + canvas_size, adjusted_target_y + canvas_size]
+                    bbox_draw = [adjusted_target_x, adjusted_target_y, adjusted_target_x + targetCanvasSize, adjusted_target_y + targetCanvasSize]
                     image_draw.rectangle(bbox_draw, outline='red', width=2)
                     # Draw a small cross at the center
                     cross_size = 5  # Length of the cross arms
@@ -183,7 +185,7 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                     'type': targetShape,
                     'x': adjusted_target_x,
                     'y': adjusted_target_y,
-                    'size': canvas_size  # Use canvas_size for width and height
+                    'size': targetCanvasSize  # Use canvas_size for width and height
                 })
 
                 # Determine the quadrant for the target
@@ -207,7 +209,7 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                     'target': True,
                     'center_x': target_center_x,
                     'center_y': target_center_y,
-                    'size': shapeSize,
+                    'size': actualTargetSize,
                     'color': target_color_hex,
                     'quadrant': quadrant,
                     'row': row_number,
@@ -254,10 +256,9 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                 attempt = 0
                 while attempt < max_attempts:
                     attempt += 1
-
                     # Random rotation angle for the distractor
                     distractor_rotation = random.uniform(theta_min, theta_max)
-
+                    padding = shapeSize * 0.05 
                     # Adjust the canvas size to accommodate the rotated shape
                     canvas_size = shapeSize + 2*padding
 
@@ -271,7 +272,6 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                     distractor_center_y = random.uniform(min_center_y, max_center_y)
 
 
-
                     if conjunctive:
                         # override shape and color if multiFeature is set.
                         chosenShape, chosenColor = get_random_multifeature_combo()
@@ -282,7 +282,6 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
 
                     else:
                         distractor_shape = distractorShape
-
                         # Determine distractor color
                         if c == -1:
                             # Random color
@@ -618,6 +617,10 @@ if __name__ == '__main__':
     parser.add_argument("-tc", "--targetColour", default=None)
     parser.add_argument("-dc", "--distractorColour", default=None)
     parser.add_argument("-s", "--size", type=int, default=None)
+    parser.add_argument("-ts", "--targetSize", type=int, default=None,
+                    help="Override target size for target shape (if not provided, uses shapeSize)")
+
+
     parser.add_argument("-q", "--quadrants", type=str, default=None, help="Specify rows,cols")
     parser.add_argument("-qo", "--quadrantOrder", type=str, default=None, help="Comma-separated list of quadrant integers")
     parser.add_argument("-p", "--preset", default=None)
@@ -980,6 +983,26 @@ if __name__ == '__main__':
             "debug": False,
             "present": False,
             "conjunctive": False,
+        },
+        "CircleSizes":{        
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": 10,
+            "c": 1,
+            "targetShape": "circle",
+            "distractorShape": "circle",
+            "shapeSize": 20,
+            "targetSize": 30,
+            "theta_min": 0,
+            "theta_max": 360,
+            "targetColour": "#00FF00",
+            "distractorColour": "#0000FF",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+            "colourMode": "randomSame",
+            "colourList": ["#FF0000", "#00FF00", "#0000FF"]
         }
     }
     
@@ -996,6 +1019,7 @@ if __name__ == '__main__':
             "targetShape": args.target if args.target is not None else "2",
             "distractorShape": args.distractor if args.distractor is not None else "5",
             "shapeSize": args.size if args.size is not None else 20,
+            "targetSize": args.targetSize if args.targetSize is not None else None,
             "theta_min": 0,
             "theta_max": args.rotation if args.rotation is not None else 360,
             "targetColour": args.targetColour if args.targetColour is not None else "#00FF00",
@@ -1022,6 +1046,8 @@ if __name__ == '__main__':
         overrides["distractorShape"] = args.distractor
     if args.size is not None:
         overrides["shapeSize"] = args.size
+    if args.targetSize is not None:
+        overrides["targetSize"] = args.targetSize
     if args.rotation is not None:
         overrides["theta_max"] = args.rotation
     if args.targetColour is not None:
