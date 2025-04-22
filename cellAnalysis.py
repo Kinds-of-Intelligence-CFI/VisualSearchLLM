@@ -17,11 +17,34 @@ parser.add_argument("-l", "--labels", nargs="+", required=True,
                     help="List of labels for each directory.")
 parser.add_argument("-c", "--confusion", action='store_true',
                     help="Include to compute and save confusion matrices.")
+
+parser.add_argument(
+    "-g", "--groups",
+    nargs="+",
+    help=(
+        "Optional grouping, format: "
+        "GroupLabel:DirA,DirB; e.g. "
+        "VerticalGradientGroup:VerticalGradient,VerticalGradientReversed"
+    )
+)
+
 args = parser.parse_args()
 
 # Ensure the number of directories matches the number of labels
 if len(args.directories) != len(args.labels):
     raise ValueError("The number of directories and labels must be the same.")
+
+
+group_map = {}
+if args.groups:
+    for spec in args.groups:
+        grp_label, members = spec.split(":", 1)
+        for d in members.split(","):
+            group_map[d] = grp_label
+
+
+
+
 
 # Determine if we should save figures and where
 if len(args.directories) == 1:
@@ -41,6 +64,8 @@ max_width = 15
 dataframes = []
 for dire in args.directories:
     label = dir_label_map[dire]
+    orig_label = dir_label_map[dire]
+    label = group_map.get(dire, orig_label)
     dir_path = "results/"+dire+"/"
     # Get list of result files in the directory
     print(dir_path)
@@ -66,10 +91,12 @@ for dire in args.directories:
 
         # Rename 'selected_cell' to 'predicted_cell'
         df_temp.rename(columns={'selected_cell': 'predicted_cell'}, inplace=True)
+        df_temp['source_file'] = result_file
 
         # Add columns to indicate the label and model
         df_temp['label'] = label
         df_temp['model'] = model_name
+        df_temp['source_dir'] = dire
 
         dataframes.append(df_temp)
 
@@ -100,11 +127,13 @@ df['actual_cell_parsed'] = df['actual_cell'].apply(parse_cell)
 df['predicted_cell_parsed'] = df['predicted_cell'].apply(parse_cell)
 
 # Handle rows where parsing failed
-df = df.dropna(subset=['actual_cell_parsed', 'predicted_cell_parsed'])
+#df = df.dropna(subset=['actual_cell_parsed']).copy()
 
+# Remember which rows have an un‑parseable prediction
+df['is_invalid_pred'] = df['predicted_cell_parsed'].isna()
 # Create a set of unique cells based only on 'actual_cell_parsed'
 unique_cells = set(df['actual_cell_parsed'])
-
+print(unique_cells)
 # Create sorted list of cell labels
 cell_labels = sorted(unique_cells)
 cell_labels_str = [f'Cell ({cell[0]}, {cell[1]})' for cell in cell_labels]
@@ -121,6 +150,10 @@ def map_predicted_cell(cell):
         return 'Invalid Prediction'
 
 df['predicted_cell_label'] = df['predicted_cell_parsed'].apply(map_predicted_cell)
+df.loc[df['is_invalid_pred'], 'correct'] = False
+
+
+
 
 # Create text output file
 if save_figures:
@@ -149,6 +182,21 @@ with open(text_output_file, 'w') as file:
         )
         print(f"Overall Classification Report for Label: {label}, Model: {model}:\n", classification_report_text)
         file.write(f"Overall Classification Report for Label: {label}, Model: {model}:\n" + classification_report_text + "\n\n")
+
+        invalid_count = (df_group['predicted_cell_label'] == 'Invalid Prediction').sum()
+        pct_invalid = invalid_count / len(df_group) * 100
+
+        print(f"\nInvalid predictions: {invalid_count} / {len(df_group)} "
+              f"({pct_invalid:.2f}%)\n")
+
+        # Print which rows were invalid
+        invalid_rows = df_group[df_group['predicted_cell_label']=='Invalid Prediction']
+        if not invalid_rows.empty:
+            print("Invalid‐prediction details:")
+            for _, row in invalid_rows.iterrows():
+                print(f"  File: {row['source_file']}\tAnswer: {row['predicted_cell']}")
+
+
 
 # Calculate success rate per cell per label per model
 success_rates_list = []
@@ -189,6 +237,7 @@ fig = plt.figure(figsize=(5 * cols, 5 * rows))
 gs = gridspec.GridSpec(rows, cols)
 
 for idx, label_model in enumerate(label_model_pairs):
+
     ax = fig.add_subplot(gs[idx])
     df_pair = success_rates_df[success_rates_df['Label_Model'] == label_model].copy()
 
@@ -263,6 +312,7 @@ accuracy_vs_distractor_df['Label_Model'] = accuracy_vs_distractor_df['Label'] + 
 # Plot line plot for accuracy vs number of distractors with shaded error region per label per model
 plt.figure(figsize=(10, 6))
 for label_model, df_group in accuracy_vs_distractor_df.groupby('Label_Model'):
+
     k_values = df_group['Number of Distractors (k)']
     accuracy_values = df_group['Accuracy']
     std_errors = df_group['Standard Error']
@@ -280,7 +330,7 @@ for label_model, df_group in accuracy_vs_distractor_df.groupby('Label_Model'):
 
 plt.xlabel('Number of Distractors (k)')
 plt.ylabel('Accuracy')
-plt.title('Accuracy vs. Number of Distractors (k) with Shaded Error Region per Label and Model')
+#plt.title('Accuracy vs. Number of Distractors (k) with Shaded Error Region per Label and Model')
 plt.ylim(0, 1)
 plt.grid(True)
 plt.legend(title='Label - Model', bbox_to_anchor=(1.05, 1), loc='upper left')
@@ -294,6 +344,7 @@ plt.show()
 unique_models = accuracy_vs_distractor_df['Model'].unique()
 
 for model_name in unique_models:
+    print(model_name)
     # Filter data for this model only
     df_model = accuracy_vs_distractor_df[accuracy_vs_distractor_df['Model'] == model_name]
 
@@ -306,6 +357,7 @@ for model_name in unique_models:
 
     # Group by label within this model
     for label, df_label in df_model.groupby('Label'):
+
         k_values = df_label['Number of Distractors (k)']
         accuracy_values = df_label['Accuracy']
         std_errors = df_label['Standard Error']
@@ -323,7 +375,7 @@ for model_name in unique_models:
     # Labeling and layout
     plt.xlabel('Number of Distractors (k)')
     plt.ylabel('Accuracy')
-    plt.title(f'Accuracy vs. Number of Distractors (k)\n(Model: {model_name} across all directories)')
+    #plt.title(f'Accuracy vs. Number of Distractors (k)\n(Model: {model_name} across all directories)')
     plt.ylim(0, 1)
     plt.grid(True)
     plt.legend(title='Directory (Label)', bbox_to_anchor=(1.05, 1), loc='upper left')
@@ -336,6 +388,95 @@ for model_name in unique_models:
 
     plt.show()
  
+
+# =============================================
+# Binned accuracy vs distractors with proper x‑spacing
+# =============================================
+
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+
+# First, define your bins as (low, high) tuples and labels
+max_k = df['num_distractors'].max()
+bin_ranges = [(k, k) for k in range(0, 11)]  # (0,0), (1,1), …, (10,10)
+start = 11
+while start <= max_k:
+    end = min(start + 4, max_k)
+    bin_ranges.append((start, end))
+    start += 5
+
+# Labels and midpoints
+bin_labels = [f"{low}-{high}" if low != high else str(low) for low, high in bin_ranges]
+midpoints = [(low + high) / 2 for low, high in bin_ranges]
+label_to_mid = dict(zip(bin_labels, midpoints))
+
+# Function to assign each sample its bin label
+def assign_bin(k):
+    k = int(k)
+    for (low, high), label in zip(bin_ranges, bin_labels):
+        if low <= k <= high:
+            return label
+    return None  # should not happen
+
+# Loop per model
+for model_name in df['model'].unique():
+    df_model = df[df['model'] == model_name].copy()
+    if df_model.empty:
+        continue
+
+    # assign bins
+    df_model['k_bin'] = df_model['num_distractors'].apply(assign_bin)
+
+    # aggregate per (label, bin)
+    agg = (
+        df_model
+        .groupby(['label', 'k_bin'])
+        .agg(n=('correct', 'size'),
+             correct=('correct', 'sum'))
+        .reset_index()
+    )
+    agg['accuracy'] = agg['correct'] / agg['n']
+    agg['stderr'] = np.where(
+        agg['n'] > 1,
+        np.sqrt(agg['accuracy'] * (1 - agg['accuracy']) / agg['n']),
+        0
+    )
+    # map midpoints
+    agg['mid'] = agg['k_bin'].map(label_to_mid)
+
+    # plot
+    plt.figure(figsize=(10, 6))
+    for label, grp in agg.groupby('label'):
+        # Sort by the numeric mid‑point so lines connect left→right
+        grp = grp.sort_values('mid')
+
+        xs = grp['mid']
+        ys = grp['accuracy']
+        se = grp['stderr']
+        upper = np.minimum(ys + 1.96 * se, 1)
+        lower = np.maximum(ys - 1.96 * se, 0)
+
+        plt.plot(xs, ys, '-o', label=label)
+        plt.fill_between(xs, lower, upper, alpha=0.2)
+
+    # set ticks at midpoints with your bin labels
+    plt.xticks(ticks=midpoints, labels=bin_labels, rotation=45)
+    plt.xlabel('Number of Distractors (binned)')
+    plt.ylabel('Accuracy')
+    plt.title(f'Binned Accuracy vs. Distractors (Model: {model_name})')
+    plt.ylim(0, 1)
+    plt.grid(True)
+    plt.legend(title='Directory (Label)', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()
+
+    if save_figures and output_dir:
+        fn = os.path.join(output_dir, f'binned_accuracy_{model_name}.png')
+        plt.savefig(fn, bbox_inches='tight')
+    plt.show()
+
+
+
 
 # Compute and save confusion matrices only if the -c or --confusion flag is set
 if args.confusion:
