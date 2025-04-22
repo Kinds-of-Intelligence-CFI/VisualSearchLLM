@@ -290,6 +290,53 @@ if save_figures:
     plt.savefig(os.path.join(output_dir, 'accuracy_vs_number_of_distractors_shaded_error.png'), bbox_inches='tight')
 plt.show()
 
+### Plot individual line plots per each model. 
+unique_models = accuracy_vs_distractor_df['Model'].unique()
+
+for model_name in unique_models:
+    # Filter data for this model only
+    df_model = accuracy_vs_distractor_df[accuracy_vs_distractor_df['Model'] == model_name]
+
+    # If there's no data for this model (unlikely, but just in case), skip
+    if df_model.empty:
+        continue
+
+    # Make a figure for this model
+    plt.figure(figsize=(10, 6))
+
+    # Group by label within this model
+    for label, df_label in df_model.groupby('Label'):
+        k_values = df_label['Number of Distractors (k)']
+        accuracy_values = df_label['Accuracy']
+        std_errors = df_label['Standard Error']
+
+        # Compute upper/lower confidence bounds
+        upper_bound = np.minimum(accuracy_values + 1.96*std_errors, 1)
+        lower_bound = np.maximum(accuracy_values - 1.96*std_errors, 0)
+
+        # Plot line
+        plt.plot(k_values, accuracy_values, '-o', label=label)
+
+        # Shaded error region
+        plt.fill_between(k_values, lower_bound, upper_bound, alpha=0.2)
+
+    # Labeling and layout
+    plt.xlabel('Number of Distractors (k)')
+    plt.ylabel('Accuracy')
+    plt.title(f'Accuracy vs. Number of Distractors (k)\n(Model: {model_name} across all directories)')
+    plt.ylim(0, 1)
+    plt.grid(True)
+    plt.legend(title='Directory (Label)', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()
+
+    # Save if needed
+    if save_figures and output_dir is not None:
+        plot_filename = os.path.join(output_dir, f'accuracy_vs_distractors_by_model_{model_name}.png')
+        plt.savefig(plot_filename, bbox_inches='tight')
+
+    plt.show()
+ 
+
 # Compute and save confusion matrices only if the -c or --confusion flag is set
 if args.confusion:
     # Include 'Invalid Prediction' in the labels
