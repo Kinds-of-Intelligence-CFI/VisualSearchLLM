@@ -220,6 +220,13 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
                             r'[\s]*(\d+)[,\s]+(\d+)[\s]*'                # 'i j' or 'i, j'
                         ]
 
+                        if trow is not None:
+                                actual_row = int(trow['row'])
+                                actual_col = int(trow['column'])
+                        else:
+                            actual_row = None
+                            actual_col = None
+
                         selected_row = None
                         selected_col = None
 
@@ -230,19 +237,10 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
                                 selected_col = int(match.group(2))
                                 break
 
-                        if selected_row is None or selected_col is None:
-                            correct = False
-                            actual_row = None
-                            actual_col = None
+                        if selected_row is not None and selected_col is not None:
+                                correct = (selected_row == actual_row and selected_col == actual_col)
                         else:
-                            if trow is not None:
-                                actual_row = trow['row']
-                                actual_col = trow['column']
-                                correct = (selected_row == actual_row) and (selected_col == actual_col)
-                            else:
-                                actual_row = None
-                                actual_col = None
-                                correct = False
+                            correct = False
 
                     elif presence:
                         # Presence mode
@@ -350,17 +348,16 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
                     'num_distractors': num_distractors,
                     'size': object_size,
                     'colourbin': colourbin,
-                    'selected_cell': f"({selected_row}, {selected_col})"
-                                     if ('selected_row' in locals() and selected_row is not None
-                                         and 'selected_col' in locals() and selected_col is not None)
-                                     else 'Unknown',
-                    'actual_cell': f"({actual_row}, {actual_col})"
-                                   if ('actual_row' in locals() and actual_row is not None
-                                       and 'actual_col' in locals() and actual_col is not None)
-                                   else 'Unknown',
-                    'correct': correct if 'correct' in locals() else False,
+                    'selected_cell': (f"({selected_row}, {selected_col})"
+                                      if selected_row is not None and selected_col is not None
+                                      else 'Unknown'),
+                    'actual_cell': (f"({actual_row}, {actual_col})"
+                                    if actual_row is not None and actual_col is not None
+                                    else 'Unknown'),
+                    'correct': correct,
                     'selected_response': selected_response
                 })
+
 
             elif presence:
                 writer.writerow({
