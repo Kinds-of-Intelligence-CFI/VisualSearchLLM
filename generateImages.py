@@ -716,6 +716,25 @@ if __name__ == '__main__':
             "colourMode": "randomSame",
             "colourList": ["#FF0000", "#00FF00", "#0000FF"]
         },
+        "2Among5NoColourRandDn":{
+            "num_images": args.number if args.number is not None else 1000,
+            "min_k": 0,
+            "max_k": args.distractors,
+            "c": 1,
+            "targetShape": "2",
+            "distractorShape": "5",
+            "shapeSize": 20,
+            "theta_min": 0,
+            "theta_max": 360,
+            "targetColour": "#00FF00",
+            "distractorColour": "#0000FF",
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+            "colourMode": "randomSame",
+            "colourList": ["#FF0000", "#00FF00", "#0000FF"]
+        },
 
         "2Among5ConjRand":{        
             "num_images": args.number if args.number is not None else 1000,
