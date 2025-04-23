@@ -20,7 +20,7 @@ def main():
     parser.add_argument("-f", "--finetuning", action='store_true', help="Create Finetuning batch")
     parser.add_argument("-m", "--model",
                         choices={"gpt-4o", "claude-sonnet", "llama11B", "llama90B",
-                                 "llamaLocal", "gpt-4-turbo", "claude-haiku"},
+                                 "llamaLocal", "gpt-4-turbo", "claude-haiku", "claude-sonnet37"},
                         required=True)
     parser.add_argument("-fmn", "--finetuned_model_name", default=None)
     args = parser.parse_args()
@@ -70,7 +70,7 @@ def main():
     # Set batch limits
     if args.model in {"gpt-4o", "gpt-4-turbo"}:
         batch_limit = 2500
-    elif args.model in ["claude-sonnet", "claude-haiku"]:
+    elif args.model in ["claude-sonnet", "claude-sonnet37", "claude-haiku"]:
         batch_limit = 500
     else:
         batch_limit = 5000
@@ -179,6 +179,25 @@ def main():
                 "custom_id": filename[:-4],  # drop ".png"
                 "params": {
                     "model": "claude-3-5-sonnet-20241022",
+                    "max_tokens": 128,
+                    "system": (
+                        "You are an AI assistant that can analyze images "
+                        "and answer questions about them."
+                    ),
+                    "messages": constructMessage(
+                        args.prompt,
+                        targetShape,
+                        targetColour,
+                        base64_image,
+                        args.model
+                    )
+                }
+            }
+        elif args.model == "claude-sonnet37":
+            batch_request = {
+                "custom_id": filename[:-4],  # drop ".png"
+                "params": {
+                    "model": "claude-3-7-sonnet-20250219",
                     "max_tokens": 128,
                     "system": (
                         "You are an AI assistant that can analyze images "

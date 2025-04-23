@@ -14,6 +14,7 @@ if __name__ == '__main__':
     parser.add_argument("-g", "--gpt4o", action="store_true")
     parser.add_argument("-g4", "--gpt4turbo", action="store_true")
     parser.add_argument("-cs", "--claudesonnet", action="store_true")
+    parser.add_argument("-cs37","--claudesonnet37", action="store_true")
     parser.add_argument("-ch", "--claudehaiku", action="store_true")
     parser.add_argument("-l", "--llama", action="store_true")
     parser.add_argument("--seed", type=int, default=42)
@@ -35,6 +36,9 @@ if __name__ == '__main__':
     if args.claudesonnet:
         subprocess.run(["python3", "createBatch.py", "-d", args.directory, "-m", "claude-sonnet", "-p", args.prompt])
         subprocess.run(["python3", "submitBatch.py", "-d", args.directory, "-m", "claude-sonnet"])
+    if args.claudesonnet37:
+        subprocess.run(["python3", "createBatch.py", "-d", args.directory, "-m", "claude-sonnet37", "-p", args.prompt])
+        subprocess.run(["python3", "submitBatch.py", "-d", args.directory, "-m", "claude-sonnet37"])
     if args.claudehaiku:
         subprocess.run(["python3", "createBatch.py", "-d", args.directory, "-m", "claude-haiku", "-p", args.prompt])
         subprocess.run(["python3", "submitBatch.py", "-d", args.directory, "-m", "claude-haiku"])

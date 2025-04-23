@@ -9,6 +9,7 @@ if __name__ == '__main__':
     parser.add_argument("-g", "--gpt4o", action="store_true")
     parser.add_argument("-gt", "--gpt4turbo", action="store_true")
     parser.add_argument("-cs", "--claudesonnet", action="store_true")
+    parser.add_argument("-cs3", "--claudesonnet37", action="store_true")
     parser.add_argument("-ch", "--claudehaiku", action="store_true")
     parser.add_argument("-l", "--llama", action="store_true")
     parser.add_argument("-rc", "--rowsandcolumns", action="store_true")
@@ -34,6 +35,8 @@ if __name__ == '__main__':
         subprocess.run(["python3", "processBatchResults.py", "-d", args.directory, "-m", "gpt-4-turbo", processFlag])
     if args.claudesonnet:
         subprocess.run(["python3", "processBatchResults.py", "-d", args.directory, "-m", "claude-sonnet", processFlag])
+    if args.claudesonnet37:
+        subprocess.run(["python3", "processBatchResults.py", "-d", args.directory, "-m", "claude-sonnet37", processFlag])
   
     if args.claudehaiku:
         subprocess.run(["python3", "processBatchResults.py", "-d", args.directory, "-m", "claude-haiku", processFlag])

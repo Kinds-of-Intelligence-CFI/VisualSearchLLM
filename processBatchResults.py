@@ -14,6 +14,12 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
                             expect_coordinates=False,
                             rows_and_columns=False,
                             presence=False):
+
+
+    claude_models = ["claude-sonnet", "claude-sonnet37", "claude-haiku"]
+    gpt_models = ["gpt-4o", "gpt-4-turbo"]
+
+
     # Read the annotations
     if expect_coordinates and rows_and_columns:
         raise ValueError("Cannot have both coordinates and rows and columns")
@@ -104,12 +110,12 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
 
             # Extract the custom_id and response data
             custom_id = response_entry.get('custom_id')
-            if model in ["claude-sonnet", "claude-haiku"]:
+            if model in claude_models:
                 custom_id += ".png"
 
-            if model in ["gpt-4o", "gpt-4-turbo"]:
+            if model in gpt_models:
                 response_data = response_entry.get('response')
-            elif model in ["claude-sonnet", "claude-haiku"]:
+            elif model in claude_models:
                 response_data = response_entry.get("result")
             elif model in {"llama11B", "llama90B"}:
                 response_data = response_entry.get("content")
@@ -160,9 +166,9 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
             elif response_data is not None:
                 # Extract LLM's response
                 try:
-                    if model in ["gpt-4o", "gpt-4-turbo"]:
+                    if model in gpt_models:
                         assistant_message = response_data['body']['choices'][0]['message']['content'].strip()
-                    elif model in ["claude-sonnet", "claude-haiku"]:
+                    elif model in claude_models:
                         assistant_message = response_data['message']['content'][0]["text"]
                     elif model in {"llama11B", "llama90B"}:
                         assistant_message = response_data
@@ -395,7 +401,7 @@ def main():
     group.add_argument("-rc", "--rowsColumns", action='store_true', help="Rows and Columns mode")
     group.add_argument("-q", "--quadrants", action="store_true", help="Quadrant mode")
     group.add_argument("-p", "--presence", action="store_true", help="Presence mode")
-    parser.add_argument("-m", "--model", choices={"gpt-4o", "gpt-4-turbo", "claude-sonnet", "claude-haiku", "llama11B", "llama90B"}, required=True)
+    parser.add_argument("-m", "--model", choices={"gpt-4o", "gpt-4-turbo", "claude-sonnet", "claude-sonnet37", "claude-haiku", "llama11B", "llama90B"}, required=True)
     args = parser.parse_args()
 
     mode_mapping = [

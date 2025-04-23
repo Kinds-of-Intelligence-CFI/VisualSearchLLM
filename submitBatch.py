@@ -7,7 +7,7 @@ import json
 # Argument parser for directory
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--directory")
-parser.add_argument("-m", "--model", choices={"gpt-4o", "gpt-4-turbo", "claude-sonnet", "claude-haiku"}, required=True)
+parser.add_argument("-m", "--model", choices={"gpt-4o", "gpt-4-turbo", "claude-sonnet", "claude-haiku", "claude-sonnet37"}, required=True)
 parser.add_argument("-f", "--finetuning", action='store_true', help="Batch is for fine tuning")
 args = parser.parse_args()
 
@@ -77,7 +77,7 @@ with open(batchid_file_path, "w") as batchid_file:
                     "description": "Visual Search"
                 }
             )
-        elif args.model in ["claude-sonnet", "claude-haiku"]:
+        elif args.model in ["claude-sonnet", "claude-sonnet37", "claude-haiku"]:
             with open(batch_file_path, 'r') as file:
                 batch=[]
                 for line in file:
