@@ -22,7 +22,11 @@ def constructMessage(writing, shape, colour, image, model, finetuning=False, sol
                "coords-5Among2": f"The presented image is 400x400 pixels large, and the origin (0,0) is in the top left of the image. In the presented image there are a number of objects. Almost all of the objects are the number 2 written as a numeral. There is a single 5 in the image, similarly represented by a numeral. What are the coordinates of the centre of the 5? Please give your best estimate. If you are uncertain please guess but optionally add a description to note this. However, for ease of processing please begin your response with a set of coordinates using round brackets."}
     message = []
 
-    if model in ["gpt-4o", "gpt-4-turbo"] or "llama" in model:
+
+    gpt_models =  ["gpt-4o", "gpt-4-turbo"]
+    claude_models = ["claude-sonnet", "claude-sonnet37", "claude-haiku"]
+
+    if model in gpt_models or "llama" in model:
         message.append({"role": "system", "content": "You are an AI assistant that can analyze images and answer questions about them."})
 
 
@@ -38,9 +42,9 @@ def constructMessage(writing, shape, colour, image, model, finetuning=False, sol
     content.append({"type": "text", "text": prompts[writing]})
 
 
-    if model in ["gpt-4o", "gpt-4-turbo"] or model=="llama11B" or model=="llama90B":
+    if model in gpt_models or model=="llama11B" or model=="llama90B":
         content.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image}"}})
-    elif model in ["claude-sonnet", "claude-haiku"]:
+    elif model in claude_models:
         content.append({"type": "image", "source": {"type": "base64", "media_type":"image/png", "data":image}})
     elif model == "llamaLocal":
         pass
