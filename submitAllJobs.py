@@ -14,7 +14,7 @@ if __name__ == '__main__':
     parser.add_argument("-g", "--gpt4o", action="store_true")
     parser.add_argument("-g4", "--gpt4turbo", action="store_true")
     parser.add_argument("-cs", "--claudesonnet", action="store_true")
-    parser.add_argument("-ch", "--claudesonnet", action="store_true")
+    parser.add_argument("-ch", "--claudehaiku", action="store_true")
     parser.add_argument("-l", "--llama", action="store_true")
     parser.add_argument("--seed", type=int, default=42)
     args=parser.parse_args()
