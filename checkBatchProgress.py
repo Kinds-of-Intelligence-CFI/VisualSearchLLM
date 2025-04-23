@@ -38,7 +38,7 @@ def extract_relevant_data(result):
 # Argument parser for directory
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--directory")
-parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "gpt-4-turbo", "claude-haiku"}, required=True)
+parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "claude-sonnet37", "gpt-4-turbo", "claude-haiku"}, required=True)
 args = parser.parse_args()
 
 directory="results/"+args.directory
@@ -46,7 +46,7 @@ directory="results/"+args.directory
 # Initialize OpenAI client
 if args.model in ["gpt-4o", "gpt-4-turbo"]:
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-elif args.model in ["claude-sonnet", "claude-haiku"]:
+elif args.model in ["claude-sonnet", "claude-haiku", "claude-sonnet37"]:
     client = anthropic.Anthropic(api_key = os.getenv("ANTHROPIC_API_KEY"))
 else:
     raise ValueError("Invalid model type!")
@@ -71,7 +71,7 @@ for batch_id in batch_ids:
             print(f"Batch {batch_id} status: {batch_info.status}")
             print(batch_info)
 
-    elif args.model in ["claude-sonnet", "claude-haiku"]:
+    elif args.model in ["claude-sonnet", "claude-sonnet37", "claude-haiku"]:
         batch_info=client.beta.messages.batches.retrieve(batch_id)
         if not batch_info.processing_status=="ended":
             all_batches_completed = False
@@ -102,7 +102,7 @@ with open(output_file_path, "w", encoding="utf-8") as combined_file:
             combined_file.write(file_response.text + "\n")
             print(f"Results from batch {batch_id} appended to {output_file_path}")
 
-        elif args.model in ["claude-sonnet", "claude-haiku"]:
+        elif args.model in ["claude-sonnet", "claude-haiku", "claude-sonnet37"]:
 
             results = client.beta.messages.batches.results(batch_id)
             for result in results:
