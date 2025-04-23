@@ -13,10 +13,13 @@ args = parser.parse_args()
 
 directory=("finetuning/" if args.finetuning else "results/")+args.directory
 
+
+gpt_models = ["gpt-4o", "gpt-4-turbo"]
+claude_models = ["claude-sonnet", "claude-haiku", "claude-sonnet37"]
 # Initialize client
-if args.model in ["gpt-4o", "gpt-4-turbo"]:
+if args.model in gpt_models:
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-elif args.model in ["claude-sonnet", "claude-haiku"]:
+elif args.model in claude_models:
     client = anthropic.Anthropic(api_key = os.getenv("ANTHROPIC_API_KEY"))
 else:
     raise ValueError("Invalid model type!")
@@ -77,7 +80,7 @@ with open(batchid_file_path, "w") as batchid_file:
                     "description": "Visual Search"
                 }
             )
-        elif args.model in ["claude-sonnet", "claude-sonnet37", "claude-haiku"]:
+        elif args.model in claude_models:
             with open(batch_file_path, 'r') as file:
                 batch=[]
                 for line in file:
