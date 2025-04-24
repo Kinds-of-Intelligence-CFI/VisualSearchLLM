@@ -30,7 +30,7 @@ if args.finetuning:
 
 
 # Get all batch_requests_*.jsonl files in the directory
-batch_files = [f for f in os.listdir(directory) if f.startswith("batch_requests_"+args.model) and f.endswith(".jsonl")]
+batch_files = [f for f in os.listdir(directory) if f.startswith("batch_requests_"+args.model+"_") and f.endswith(".jsonl")]
 
 # Sort batch files to ensure proper order
 batch_files.sort()
