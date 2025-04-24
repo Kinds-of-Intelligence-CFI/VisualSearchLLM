@@ -9,7 +9,7 @@ if __name__ == '__main__':
     parser.add_argument("-g", "--gpt4o", action="store_true")
     parser.add_argument("-gt", "--gpt4turbo", action="store_true")
     parser.add_argument("-cs", "--claudesonnet", action="store_true")
-    parser.add_argument("-cs3", "--claudesonnet37", action="store_true")
+    parser.add_argument("-cs37", "--claudesonnet37", action="store_true")
     parser.add_argument("-ch", "--claudehaiku", action="store_true")
     parser.add_argument("-l", "--llama", action="store_true")
     parser.add_argument("-rc", "--rowsandcolumns", action="store_true")
