@@ -7,7 +7,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--directory", required=True)
     parser.add_argument("-g", "--gpt4o", action="store_true")
-    parser.add_argument("-gt", "--gpt4turbo", action="store_true")
+    parser.add_argument("-g4", "--gpt4turbo", action="store_true")
     parser.add_argument("-cs", "--claudesonnet", action="store_true")
     parser.add_argument("-cs37", "--claudesonnet37", action="store_true")
     parser.add_argument("-ch", "--claudehaiku", action="store_true")
