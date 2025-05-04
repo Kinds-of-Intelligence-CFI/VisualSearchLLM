@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from matplotlib import rcParams
 
 sns.set(style="whitegrid")
 
@@ -227,7 +228,7 @@ class CellAnalysis(Analysis):
         avs_df = metrics['avs_df']
 
         # Combined accuracy vs distractors per label-model
-        plt.figure(figsize=(8,6))
+        plt.figure(figsize=figSize)
         for (lab,mod), grp in avs_df.groupby(['label','model']):
             xs, ys, se = grp['k'], grp['acc'], grp['se']
             plt.plot(xs,ys,'-o',label=f"{lab}-{mod}")
@@ -241,7 +242,8 @@ class CellAnalysis(Analysis):
 
         # Individual plots per model, comparing labels
         for model, grp_model in avs_df.groupby('model'):
-            plt.figure(figsize=(8,6))
+            plt.figure(figsize=figSize)
+            print(model)
             for lab, grp in grp_model.groupby('label'):
                 grp_sorted = grp.sort_values('k')
                 xs, ys, se = grp_sorted['k'], grp_sorted['acc'], grp_sorted['se']
@@ -249,7 +251,7 @@ class CellAnalysis(Analysis):
                 plt.fill_between(xs, ys-1.96*se, ys+1.96*se, alpha=0.2)
             plt.xlabel('Number of Distractors (k)')
             plt.ylabel('Accuracy')
-            plt.title(f'Model: {model}')
+            #plt.title(f'Model: {model}')
             plt.ylim(0,1)
             plt.legend(title='Label', bbox_to_anchor=(1.05,1), loc='upper left')
             plt.tight_layout()
@@ -275,39 +277,84 @@ class CoordsAnalysis(Analysis):
         df['label'] = df['source_dir'].map(self.group_map).fillna(df['label'])
         return df
 
+    
     def compute_metrics(self, df):
-        out_lines = []
+        # clamp invalid errors to the image diagonal
+        maxError = np.hypot(400, 400)  # ≈565.7 px
+        df = df.copy()
+        df.loc[df['is_invalid'], 'euclidean_error'] = maxError
 
         # 1) report total vs correct (valid) per label/model
-        for (lab, mod), group in df.groupby(['label', 'model']):
-            total = len(group)
-            invalid = group['is_invalid'].sum()
+        outLines = []
+        for (lab, mod), groupDf in df.groupby(['label', 'model']):
+            total = len(groupDf)
+            invalid = groupDf['is_invalid'].sum()
             correct = total - invalid
-            acc_pct = (correct / total * 100) if total else 0
-            out_lines.append(
+            accPct = (correct / total * 100) if total else 0
+            outLines.append(
                 f"Label={lab}  Model={mod}  "
                 f"Total={total}  "
-                f"Correct={correct} ({acc_pct:.2f}%)"
+                f"Valid={correct} ({accPct:.2f}%)"
             )
 
-        # 2) now compute mean±SE on the valid rows only
-        valid = df[~df['is_invalid']]
-        stats = (
-            valid
+        # 2) compute mean ± SE on all rows (invalid ones carry maxError)
+        errorStats = (
+            df
             .groupby(['label', 'model', 'num_distractors'])['euclidean_error']
             .agg(['mean', 'std', 'count'])
             .reset_index()
             .rename(columns={'mean': 'avg_error'})
         )
-        stats['se'] = stats['std'] / np.sqrt(stats['count'])
+        errorStats['se'] = errorStats['std'] / np.sqrt(errorStats['count'])
 
-        return ({'error_stats': stats}, "\n".join(out_lines) + "\n")
+        return ({'error_stats': errorStats}, "\n".join(outLines) + "\n")
 
     def plot(self, metrics):
+
+        df_all = self.load_csvs()
+        df_all = self.preprocess(df_all)
+        df_all['is_valid'] = ~df_all['is_invalid']
+
+        # get valid‐rate by label+model
+        rates = (
+            df_all
+            .groupby(['label', 'model'])['is_valid']
+            .mean()
+            .reset_index()
+        )
+        rates['accuracy_pct'] = rates['is_valid'] * 100
+
+        # grab the same color cycle you use in line plots
+        color_cycle = rcParams['axes.prop_cycle'].by_key()['color']
+
+        # map each label to one color in that cycle
+        labels = sorted(rates['label'].unique())
+        color_map = {lab: color_cycle[i % len(color_cycle)] 
+                     for i, lab in enumerate(labels)}
+
+        # one bar‐chart per model
+        for model, grp in rates.groupby('model'):
+            print(model)
+            plt.figure(figsize=(8, 5))
+            # assign each bar its label’s color
+            bar_colors = [color_map[lab] for lab in grp['label']]
+            plt.bar(grp['label'], grp['accuracy_pct'], color=bar_colors)
+            plt.xlabel('Label')
+            plt.ylabel('Valid Rate (%)')
+            #plt.title(f'Valid/Correct Rate for Model: {model}')
+            plt.xticks(rotation=45, ha='right')
+            plt.tight_layout()
+            if self.save_figs and self.output_dir:
+                fname = f'coords_valid_rate_{model}.png'
+                plt.savefig(os.path.join(self.output_dir, fname))
+            plt.show()
+
+
+
         stats = metrics['error_stats']
 
         # Combined plot with 95% CI
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=figSize)
         for (lab, mod), grp in stats.groupby(['label', 'model']):
             grp = grp.sort_values('num_distractors')
             xs = grp['num_distractors']
@@ -323,7 +370,8 @@ class CoordsAnalysis(Analysis):
 
         # Individual plots per model
         for model, grp_model in stats.groupby('model'):
-            plt.figure(figsize=(10, 6))
+            print(model)
+            plt.figure(figsize=figSize)
             for lab, grp in grp_model.groupby('label'):
                 grp = grp.sort_values('num_distractors')
                 xs = grp['num_distractors']
@@ -333,7 +381,8 @@ class CoordsAnalysis(Analysis):
                 plt.fill_between(xs, ys - 1.96 * se, ys + 1.96 * se, alpha=0.2)
             plt.xlabel('Number of Distractors')
             plt.ylabel('Average Euclidean Error')
-            plt.title(f'Model: {model}')
+            plt.ylim(bottom=0)
+            #plt.title(f'Model: {model}')
             plt.legend(title='Label', bbox_to_anchor=(1.05, 1), loc='upper left')
             plt.tight_layout()
             plt.show()
@@ -403,6 +452,12 @@ if __name__ == '__main__':
     p.add_argument('-g','--groups',nargs='+')
     p.add_argument('-c','--confusion',action='store_true')
     args = p.parse_args()
+
+
+    sns.set_context("talk", font_scale=1.3)
+    figSize=(14,8)
+
+
 
     # determine save_figs
     save_figs = len(args.directories)==1
