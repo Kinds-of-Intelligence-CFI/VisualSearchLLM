@@ -24,6 +24,7 @@ def main():
                         required=True)
     parser.add_argument("-fmn", "--finetuned_model_name", default=None)
     args = parser.parse_args()
+    print(args)
 
     # Decide on the directory (finetuning vs. results)
     if args.finetuning:
@@ -39,7 +40,7 @@ def main():
         raise FileNotFoundError(f"Annotations file not found: {annotations_file}")
 
     annotations = pd.read_csv(annotations_file)
-
+    
     # -------------------------------------------------------------------------
     # Build a dictionary: filename -> a single target row's data
     # We replicate the original logic of using the FIRST row in 'targets'
@@ -179,6 +180,7 @@ def main():
                 "custom_id": filename[:-4],  # drop ".png"
                 "params": {
                     "model": "claude-3-5-sonnet-20241022",
+                    "temperature": 0.0,
                     "max_tokens": 128,
                     "system": (
                         "You are an AI assistant that can analyze images "
@@ -217,6 +219,7 @@ def main():
                 "custom_id": filename[:-4],  # drop ".png"
                 "params": {
                     "model": "claude-3-5-haiku-20241022",
+                    "temperature": 0.0,
                     "max_tokens": 128,
                     "system": (
                         "You are an AI assistant that can analyze images "
