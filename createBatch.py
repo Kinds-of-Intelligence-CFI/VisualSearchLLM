@@ -128,7 +128,7 @@ def main():
                     base64_image,
                     args.model,
                     finetuning=args.finetuning,
-                    cell=cell
+                    solution=cell
                 )
             }
         elif args.finetuning:
