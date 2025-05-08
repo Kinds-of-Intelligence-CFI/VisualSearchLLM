@@ -257,6 +257,65 @@ class CellAnalysis(Analysis):
             plt.tight_layout()
             plt.show()
 
+
+        selected_models = ['gpt-4o', 'claude-sonnet', 'claude-haiku', 'llama90B'] 
+        modelTitleMap = {
+            'gpt-4o': 'GPT-4o',
+            'claude-sonnet': 'Claude Sonnet',
+            'llama90B': 'Llama 90B',
+            'claude-haiku': 'Claude Haiku',
+        }
+
+
+        # bump up font for paper
+        plt.rcParams.update({'font.size': 18})
+
+        fig, axes = plt.subplots(2, 2, figsize=(16, 12), sharex=True, sharey=True)
+
+        for ax, model in zip(axes.flatten(), selected_models):
+            grp_model = avs_df[avs_df['model'] == model]
+            if grp_model.empty:
+                ax.set_title(f"{model} (no data)")
+                continue
+
+            for label, grp in grp_model.groupby('label'):
+                grp = grp.sort_values('k')
+                prettyMod = modelTitleMap.get(model, model)
+                ax.plot(grp['k'], grp['acc'], '-o', label=label)
+                ax.fill_between(grp['k'],
+                                grp['acc'] - 1.96*grp['se'],
+                                grp['acc'] + 1.96*grp['se'],
+                                alpha=0.2)
+            prettyMod = modelTitleMap.get(model, model)
+            ax.set_title(prettyMod)
+            ax.set_xlabel('Number of Distractors (k)')
+            ax.set_ylabel('Accuracy')
+            ax.set_ylim(0,1)
+
+
+        for ax in axes[0]:
+                ax.set_xlabel('')
+        for ax in axes[:, 1]:
+            ax.set_ylabel('')
+
+        # grab handles/labels from any one subplot
+        handles, labels = axes[0, 0].get_legend_handles_labels()
+
+        # place single legend below the grid, in figure‐coords
+        fig.legend(
+            handles, labels,
+            loc='lower center',
+            bbox_transform=fig.transFigure,
+            bbox_to_anchor=(0.5, 0.02),  # x=0.5 centers, y≈0.02 just above bottom
+            ncol=len(labels),
+            fontsize=20,
+            frameon=False
+        )
+
+        # now tighten the layout, leaving room at bottom for legend
+        fig.tight_layout(rect=[0, 0.1, 1, 0.95])
+        plt.show()
+
 class CoordsAnalysis(Analysis):
     @property
     def mode(self):
@@ -386,6 +445,72 @@ class CoordsAnalysis(Analysis):
             plt.legend(title='Label', bbox_to_anchor=(1.05, 1), loc='upper left')
             plt.tight_layout()
             plt.show()
+
+
+        selected_models = ['gpt-4o', 'claude-sonnet', 'claude-haiku', 'llama90B'] 
+        modelTitleMap = {
+            'gpt-4o': 'GPT-4o',
+            'claude-sonnet': 'Claude Sonnet',
+            'llama90B': 'Llama 90B',
+            'claude-haiku': 'Claude Haiku',
+        }
+
+        plt.rcParams.update({'font.size': 18})
+
+
+        # --- 2×2 SUBPLOT PANEL FOR FOUR MODELS ---
+        fig, axes = plt.subplots(2, 2, figsize=(16, 12), sharex=True, sharey=True)
+
+        for ax, model in zip(axes.flatten(), selected_models):
+            grp = stats[stats['model'] == model].sort_values('num_distractors')
+            if grp.empty:
+                ax.set_title(f"{pretty}\n(no data)")
+                continue
+
+            for rawLab, sub in grp.groupby('label'):
+                ax.plot(sub['num_distractors'], sub['avg_error'], '-o', label=rawLab)
+                ax.fill_between(
+                    sub['num_distractors'],
+                    sub['avg_error'] - 1.96*sub['se'],
+                    sub['avg_error'] + 1.96*sub['se'],
+                    alpha=0.2
+                )
+            ax.set_xlabel('')   # clear by default—you’ll restore only bottom
+            ax.set_ylabel('')   # clear by default—only left will show
+
+        # clear top x-labels, right y-labels
+        for ax in axes.flatten():
+            ax.set_ylabel('')
+
+            # add one figure-level y-label (centered alongside the left column)
+            # if you have Matplotlib ≥3.4:
+            fig.supylabel(
+                'Average Euclidean Error',
+                x=0.032,       # tweak horizontal position; ~0.06 sits just outside the left plots
+                fontsize=24,
+                va='center'
+            )
+
+        # restore bottom & left labels
+        for ax in axes[1]:
+            ax.set_xlabel('Number of Distractors')
+       
+        # single legend below
+        handles, labels = axes[0,0].get_legend_handles_labels()
+        fig.legend(
+            handles, labels,
+            loc='lower center',
+            bbox_transform=fig.transFigure,
+            bbox_to_anchor=(0.5, 0.02),
+            ncol=len(labels),
+            fontsize=20,
+            frameon=False
+        )
+
+        fig.tight_layout(rect=[0, 0.1, 1, 0.95])
+        plt.show()
+        # ---------------------------------------------
+
 
 
 class PresenceAnalysis(Analysis):
