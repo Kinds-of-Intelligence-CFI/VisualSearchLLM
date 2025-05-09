@@ -1121,7 +1121,7 @@ if __name__ == '__main__':
             "colourMode": "randomDifferent",
             "colourList": ["#FF0000", "#00FF00", "#0000FF"]
         },
-        "CircleSizesMedium":{    
+        "CircleSizesLarge":{    
             "num_images": args.number if args.number is not None else 1000,
             "min_k": 0,
             "max_k": 50,
@@ -1141,7 +1141,7 @@ if __name__ == '__main__':
             "colourMode": "randomSame",
             "colourList": ["#FF0000", "#00FF00", "#0000FF"]
         },
-         "CircleSizesSmall":{        
+         "CircleSizesMedium":{        
             "num_images": args.number if args.number is not None else 1000,
             "min_k": 0,
             "max_k": 50,
@@ -1161,27 +1161,7 @@ if __name__ == '__main__':
             "colourMode": "randomSame",
             "colourList": ["#FF0000", "#00FF00", "#0000FF"]
         },
-         "CircleSizesBig":{        
-            "num_images": args.number if args.number is not None else 1000,
-            "min_k": 0,
-            "max_k": 50,
-            "c": 1,
-            "targetShape": "circle",
-            "distractorShape": "circle",
-            "shapeSize": 20,
-            "targetSize": 35,
-            "theta_min": 0,
-            "theta_max": 360,
-            "targetColour": "#00FF00",
-            "distractorColour": "#0000FF",
-            "quadrantOrder": [1, 2, 3, 4],
-            "debug": False,
-            "present": False,
-            "conjunctive": False,
-            "colourMode": "randomSame",
-            "colourList": ["#FF0000", "#00FF00", "#0000FF"]
-        },
-         "CircleSizesExtraSmall":{        
+         "CircleSizesSmall":{        
             "num_images": args.number if args.number is not None else 1000,
             "min_k": 0,
             "max_k": 50,
