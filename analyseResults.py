@@ -258,7 +258,7 @@ class CellAnalysis(Analysis):
             plt.show()
 
 
-        selected_models = ['gpt-4o', 'claude-sonnet', 'claude-haiku', 'llama90B'] 
+        selected_models = ['gpt-4o', 'claude-sonnet', 'llama90B'] 
         modelTitleMap = {
             'gpt-4o': 'GPT-4o',
             'claude-sonnet': 'Claude Sonnet',
@@ -297,6 +297,9 @@ class CellAnalysis(Analysis):
                 ax.set_xlabel('')
         for ax in axes[:, 1]:
             ax.set_ylabel('')
+
+        for ax in axes[1, :]:
+            ax.set_xlabel('Number of Distractors (k)', fontsize=18)
 
         # grab handles/labels from any one subplot
         handles, labels = axes[0, 0].get_legend_handles_labels()
@@ -447,7 +450,7 @@ class CoordsAnalysis(Analysis):
             plt.show()
 
 
-        selected_models = ['gpt-4o', 'claude-sonnet', 'claude-haiku', 'llama90B'] 
+        selected_models = ['gpt-4o', 'claude-sonnet','llama90B'] 
         modelTitleMap = {
             'gpt-4o': 'GPT-4o',
             'claude-sonnet': 'Claude Sonnet',
@@ -462,6 +465,7 @@ class CoordsAnalysis(Analysis):
         fig, axes = plt.subplots(2, 2, figsize=(16, 12), sharex=True, sharey=True)
 
         for ax, model in zip(axes.flatten(), selected_models):
+            pretty = modelTitleMap.get(model, model)
             grp = stats[stats['model'] == model].sort_values('num_distractors')
             if grp.empty:
                 ax.set_title(f"{pretty}\n(no data)")
@@ -475,6 +479,7 @@ class CoordsAnalysis(Analysis):
                     sub['avg_error'] + 1.96*sub['se'],
                     alpha=0.2
                 )
+            ax.set_title(pretty)
             ax.set_xlabel('')   # clear by default—you’ll restore only bottom
             ax.set_ylabel('')   # clear by default—only left will show
 
@@ -486,7 +491,7 @@ class CoordsAnalysis(Analysis):
             # if you have Matplotlib ≥3.4:
             fig.supylabel(
                 'Average Euclidean Error',
-                x=0.032,       # tweak horizontal position; ~0.06 sits just outside the left plots
+                x=0.032,       # tweak horizontal position;  
                 fontsize=24,
                 va='center'
             )
