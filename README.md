@@ -39,11 +39,19 @@ Our results were created with the following prompt presets (found in `constructM
 
 | Cells | Presets to Use                          |
 |---------------------|------------------------------------------|
-| Inefficient Disjunctive <br> Efficient Disjunctive     | `std2x2-2Among5`<br> `std2x2-5Among2` |
-| Conjunctive | `std2x2-2Among5-conj` |
-| Light Priors  | `VerticalGradient`<br>`VerticalGradientReversed`<br>`HorizontalGradient`<br>`HorizontalGradientReversed` |
-| Circle Sizes  | `CircleSizesSmall`<br>`CircleSizesMedium`<br>`CircleSizesLarge` |
+| (2Among5) Inefficient Disjunctive <br> Efficient Disjunctive     | `std2x2-2Among5`<br> `std2x2-5Among2` |
+| (2Among5) Conjunctive | `std2x2-2Among5-conj` |
+| Light Priors  | `lightPriorsHorizontal`<br>`lightPriorsVertical`<br>`lightPriorsHorizontalReversed`<br>`lightPriorsVerticalReversed` |
+| Circle Sizes  | `circle-sizes` |
 
+
+
+| Coordinates | Presets to Use                          |
+|---------------------|------------------------------------------|
+| (2Among5) Inefficient Disjunctive <br> Efficient Disjunctive     | `coords-2Among5`<br> `coords-5Among2` |
+| (2Among5) Conjunctive | `coords-2Among5-conj` |
+| Light Priors  | `coords-lightPriorsHorizontal`<br>`coords-lightPriorsVertical`<br>`coords-lightPriorsHorizontalReversed`<br>`coords-lightPriorsVerticalReversed`|
+| Circle Sizes  | `coords-circle-sizes` |
 
 
 
@@ -51,23 +59,26 @@ Our results were created with the following prompt presets (found in `constructM
 To actually submit the batch to Anthropic/OpenAI:
 `python submitBatch.py -d x -m x`
 This will handle the creation of a job with the batching provider and save the appropriate log numbers for retrieval later.
+Similarly, for Llama, `python submitHPCBatch.py -d x -m x` will submit the batch to SLURM.
+
 
 ## Checking on / Finishing a Batch
-Batches occur asynchronously, seemingly whenever the providers have available compute. To check the progress of a batch use
+For the Anthropic/OpenAI models, batches occur asynchronously, seemingly whenever the providers have available compute. To check the progress of a batch use
 `python checkBatchProgress.py -d x -m x`
 This will display, for each batch, the number of requests completed. Once all batches are complete, the results files will be downloaded.
+If running a request locally or on an HPC you'll need to look up how to check when your batch is done yourself.
 
 ## Processing Batch Results
 To turn the batch results into a more readable format we need to pocess them. To do this we use
 `python processBatchResults.py -d x -m x` 
-We have a few extra options depending on whether we are expecting the results to be coordinates, cells, or quadrant numbers. 
-Either `-c`, `-rc`, `-q`
+We have a few extra options depending on whether we are expecting the results to be coordinates or cells.
+Either `-c`, `-rc`.
+The script `processAllJobs.py` can let you select models to process batch results for multiple models in sequence.
+
+
 
 ## Presenting the Results
-To generate visualisations of the results there are three options, depending on whether the questions formed around coordinates, cells, or quadrant numbers.
-The first is to 
-
-If expecting coordinates, `python coordsAnalysis -d x -l x`,
-where `-d` is a sequence of directories with completed results files, and `-l` a sequence of corresponding labels.
-Similarly if expecting cells, use `python cellsAnalysis -d x -l x`
-Finally, if expecting quadrant numbers use `python resultsAnalysis -d x -l x`
+`analyseResults.py` is the main script for visualising results. Usage looks like
+`python analyseResults.py -d <d1, d2, d3,d4...>, <l1,l2,l3,l4...> -g group1:d1,d2 group2:d3,d4 --mode m`
+where `<d1,...>` is list of directories which results you want to compare, `<l1,..>` is a list of labels, and `groupx: d1,d2` names a new group, groupx and merges d1 and d2's results into a single blob. 
+This is useful e.g., when wanting to merge 2Among5 and 5Among2.
