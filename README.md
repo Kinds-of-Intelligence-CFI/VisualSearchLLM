@@ -1,9 +1,10 @@
+
 # VisualSearchLLM
 
 
 This code is for investigating the pop-out effect in Visual AI systems.
 
-To run this code from scratch the following should be done:
+To run this code from scratch to replicate our results the following should be done:
 
 ## Install requirements
 
@@ -18,12 +19,33 @@ The datasets can be created using the generateImages.py file.
 The intended use is `python generateImages.py -n x -d x -p x`
 where `-n` is the flag for the number of images to create, `-d` is the directory to store the images, and `-p` is a selection from preset options configuring the images created. More control over the images generated is possible using other flags.
 
+Our results were created with n=10000 and we used the following presets:
+
+| Experiment Type     | Presets to Use                          |
+|---------------------|------------------------------------------|
+| 2Among5       | `2Among5ColourRand`<br>`2Among5NoColourRand`<br>`2Among5ConjRand`<br> `5Among2ColourRand`<br>`5Among2NoColourRand`<br>`5Among2ConjRand` |
+| Light Priors  | `VerticalGradient`<br>`VerticalGradientReversed`<br>`HorizontalGradient`<br>`HorizontalGradientReversed` |
+| Circle Sizes  | `CircleSizesSmall`<br>`CircleSizesMedium`<br>`CircleSizesLarge` |
+
+
 ## Create a Batch
 
 For OpenAI and Anthropic models we can take advantage of Batching to reduce costs. To do this we need to prepare all of the requests ahead of time.
 We can do this with `python createBatch.py -d x -m x -p x`
-where the `-d` flag gives the directory; `-m` the model (GPT-4o or Claude Sonnet), `-p` gives the prompt to provide as an element from the list in `constructMessage.py`
+where the `-d` flag gives the directory; `-m` the model (see supported model list), `-p` gives the prompt to provide as an element from the list in `constructMessage.py`
 This creates an appropriate number of `.jsonl` files for the batching (there is a maximum number of requests per batch we frequently exceed).
+
+Our results were created with the following prompt presets (found in `constructMessage.py`)
+
+| Cells | Presets to Use                          |
+|---------------------|------------------------------------------|
+| Inefficient Disjunctive <br> Efficient Disjunctive     | `std2x2-2Among5`<br> `std2x2-5Among2` |
+| Conjunctive | `std2x2-2Among5-conj` |
+| Light Priors  | `VerticalGradient`<br>`VerticalGradientReversed`<br>`HorizontalGradient`<br>`HorizontalGradientReversed` |
+| Circle Sizes  | `CircleSizesSmall`<br>`CircleSizesMedium`<br>`CircleSizesLarge` |
+
+
+
 
 ## Submit a Batch
 To actually submit the batch to Anthropic/OpenAI:
@@ -36,7 +58,7 @@ Batches occur asynchronously, seemingly whenever the providers have available co
 This will display, for each batch, the number of requests completed. Once all batches are complete, the results files will be downloaded.
 
 ## Processing Batch Results
-To turn the batch results into a more readable format we need to process them. To do this we use
+To turn the batch results into a more readable format we need to pocess them. To do this we use
 `python processBatchResults.py -d x -m x` 
 We have a few extra options depending on whether we are expecting the results to be coordinates, cells, or quadrant numbers. 
 Either `-c`, `-rc`, `-q`
