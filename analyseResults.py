@@ -343,7 +343,13 @@ class CellAnalysis(Analysis):
         plt.xlabel('Number of Distractors (k)')
         plt.ylabel('Accuracy')
         plt.ylim(0,1)
-        plt.legend(title='Label - Model', bbox_to_anchor=(1.05,1), loc='upper left')
+        plt.legend(
+                loc='lower center',
+                bbox_to_anchor=(0.5, -0.25),
+                ncol=len(avs_df.groupby('label')),
+                fontsize=20,
+                frameon=False
+            )
         plt.tight_layout()
         plt.show()
 
@@ -360,7 +366,13 @@ class CellAnalysis(Analysis):
             plt.ylabel('Accuracy')
             #plt.title(f'Model: {model}')
             plt.ylim(0,1)
-            plt.legend(title='Label', bbox_to_anchor=(1.05,1), loc='upper left')
+            plt.legend(
+                loc='lower center',
+                bbox_to_anchor=(0.5, -0.25),
+                ncol=len(grp_model.groupby('label')),
+                fontsize=20,
+                frameon=False
+            )
             plt.tight_layout()
             plt.show()
 
