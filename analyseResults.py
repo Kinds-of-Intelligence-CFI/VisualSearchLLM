@@ -188,6 +188,7 @@ class CellAnalysis(Analysis):
             print(f"Participants remaining: {len(valid_participants)}")
             self.human_df = df[df['PID'].isin(valid_participants)]
         else:
+            self.human_experiment=None
             self.human_df=None
 
 
@@ -431,6 +432,8 @@ class CellAnalysis(Analysis):
                 tick_positions = [0,10,20,30,40,49]
             elif self.human_experiment == "2Among5":
                 tick_positions = [0,20,40,60,80,99]
+            else:
+                tick_positions = [0, 20, 40, 60, 80, 99]
             for ax in axes.flatten()[:len(selected_models)]:
                 #ax.set_xlim(0, 99)
                 ax.set_xticks(tick_positions)
