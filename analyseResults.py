@@ -191,6 +191,7 @@ class CellAnalysis(Analysis):
             print(f"Participants remaining: {len(valid_participants)}")
             self.human_df = df[df['PID'].isin(valid_participants)]
         else:
+            self.human_experiment=None
             self.human_df=None
 
 
@@ -345,7 +346,13 @@ class CellAnalysis(Analysis):
         plt.xlabel('Number of Distractors (k)')
         plt.ylabel('Accuracy')
         plt.ylim(0,1)
-        plt.legend(title='Label - Model', bbox_to_anchor=(1.05,1), loc='upper left')
+        plt.legend(
+                loc='lower center',
+                bbox_to_anchor=(0.5, -0.25),
+                ncol=len(avs_df.groupby('label')),
+                fontsize=20,
+                frameon=False
+            )
         plt.tight_layout()
         plt.show()
 
@@ -362,7 +369,13 @@ class CellAnalysis(Analysis):
             plt.ylabel('Accuracy')
             #plt.title(f'Model: {model}')
             plt.ylim(0,1)
-            plt.legend(title='Label', bbox_to_anchor=(1.05,1), loc='upper left')
+            plt.legend(
+                loc='lower center',
+                bbox_to_anchor=(0.5, -0.25),
+                ncol=len(grp_model.groupby('label')),
+                fontsize=20,
+                frameon=False
+            )
             plt.tight_layout()
             plt.show()
 
@@ -487,6 +500,8 @@ class CellAnalysis(Analysis):
                 tick_positions = [0,10,20,30,40,49]
             elif self.experiment == "2Among5":
                 tick_positions = [0,20,40,60,80,99]
+            else:
+                tick_positions = [0, 20, 40, 60, 80, 99]
             for ax in axes.flatten()[:len(selected_models)]:
                 #ax.set_xlim(0, 99)
                 ax.set_xticks(tick_positions)
