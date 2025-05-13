@@ -122,9 +122,9 @@ class Analysis:
 class CellAnalysis(Analysis):
 
     def __init__(self, directories, labels, groups=None, output_dir=None,
-                     save_figs=False, confusion=False, human_csv=None, human_experiment=None):
+                     save_figs=False, confusion=False, human_experiment=None):
         super().__init__(directories, labels, groups, output_dir, save_figs, confusion)
-        if human_csv:
+        if human_experiment:
             self.human_experiment=human_experiment
             def clean_columns(df):
                 df = df[(df["Display"] == "Task") & (df["Screen"] == "trial")]
@@ -147,20 +147,13 @@ class CellAnalysis(Analysis):
                 df['accuracy'] = df['accuracy'].fillna(0).astype(int)
                 return df
 
-            ## load results
-            experiments = ["e1_numbers","e2_light_priors", "e3_circle_sizes"]
-            if human_experiment == None:
-                raise Exception("Invalid experiment chosen")
-            elif human_experiment == "2Among5":
-                selected_experiment=0
-            elif human_experiment == "LightPriors":
-                selected_experiment = 1
-            elif human_experiment == "CircleSizes":
-                selected_experiment=2
-            experiment = experiments[selected_experiment]
+
+            experimentCSVMap = {"2Among5": "e1_numbers", "LightPriors": "e2_light_priors", "CircleSizes":"e3_circle_sizes"}
+
+            experiment = experimentCSVMap[self.human_experiment]
             df = pd.read_csv(os.path.join(f"{experiment}.csv"))
             df = clean_columns(df)
-            if selected_experiment == 0:
+            if self.human_experiment == "2Among5":
                 condition = "colour_type"
                 df['colour_type'] = df['colour_type'].replace({
                     'no_colour': 'Inefficient disjunctive',
@@ -168,45 +161,16 @@ class CellAnalysis(Analysis):
                     'conjunctive': 'Conjunctive'
                 })
                 bin_edges = [1, 5, 9, 17, 33, 65, 100]
-                bin_labels = [
-                    '1–4',
-                    '5–8',
-                    '9–16',
-                    '17–32',
-                    '33–64',
-                    '65–99'
-                ]
+                bin_labels = ['1–4','5–8','9–16','17–32','33–64','65–99']
 
-            elif selected_experiment == 1:
+            elif self.human_experiment == "LightPriors":
                 condition = "light_direction"
                 bin_edges = [1, 5, 9, 13, 17, 21, 25, 33, 50]
-                bin_labels = [
-                    '1–4',
-                    '5–8',
-                    '9–12',
-                    '13–16',
-                    '17–20',
-                    '21–24',
-                    '25-32',
-                    '33-49'
-                ]
-            elif selected_experiment == 2:
+                bin_labels = ['1–4','5–8','9–12','13–16','17–20','21–24','25-32','33-49']
+            elif selected_experiment == "CircleSizes":
                 condition = "target_size"
                 bin_edges = [1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 50]
-                bin_labels = [
-                    '1–4',
-                    '5–8',
-                    '9–12',
-                    '13–16',
-                    '17–20',
-                    '21–24',
-                    '25-28',
-                    '29-32',
-                    '33-36',
-                    '37-40',
-                    '41-44',
-                    '45-49'
-                ]
+                bin_labels = ['1–4','5–8','9–12','13–16','17–20','21–24','25-28','29-32','33-36','37-40','41-44','45-49']
                
             df['distractor_bin'] = pd.cut(df['num_distractors'],
                                           bins=bin_edges,
@@ -333,33 +297,18 @@ class CellAnalysis(Analysis):
     def plot(self, metrics):
 
         if self.human_df is not None:
-            if self.human_experiment == "2Among5":
-                raw = (
-                    self.human_df
-                      .rename(columns={'colour_type':'label', 'distractor_bin':'bin'})
-                      .groupby(['label','bin'], observed=True)['accuracy']
-                      .agg(['mean','std','count'])
-                      .reset_index()
-                      .rename(columns={'mean':'acc'})
-                )
-            elif self.human_experiment == "LightPriors":
-                raw = (
-                    self.human_df
-                      .rename(columns={'light_direction':'label','distractor_bin':'bin'})
-                      .groupby(['label','bin'], observed=True)['accuracy']
-                      .agg(['mean','std','count'])
-                      .reset_index()
-                      .rename(columns={'mean':'acc'})
-                )
-            elif self.human_experiment == "CircleSizes":
-                raw = (
-                    self.human_df
-                      .rename(columns={'target_size':'label','distractor_bin':'bin'})
-                      .groupby(['label','bin'], observed=True)['accuracy']
-                      .agg(['mean','std','count'])
-                      .reset_index()
-                      .rename(columns={'mean':'acc'})
-                )
+
+            featureMap = {"2Among5": 'colour_type', "LightPriors":'light_direction', 'CircleSizes': 'target_size'}
+
+            raw = (
+                self.human_df
+                  .rename(columns={featureMap[self.human_experiment]:'label','distractor_bin':'bin'})
+                  .groupby(['label','bin'], observed=True)['accuracy']
+                  .agg(['mean','std','count'])
+                  .reset_index()
+                  .rename(columns={'mean':'acc'})
+            )
+         
             raw['se'] = raw['std'] / np.sqrt(raw['count'])
 
             # normalize & split bin-strings robustly
@@ -431,12 +380,12 @@ class CellAnalysis(Analysis):
 
 
 
-        avs_df['label']      = avs_df['label'].str.title()
+        avs_df['label'] = avs_df['label'].str.title()
         if humanStats is not None:
             humanStats['label'] = humanStats['label'].str.title()
 
 
-       
+
         all_labels = sorted(
             set(avs_df['label'].unique())
             | set(humanStats['label'].unique() if humanStats is not None else [])
@@ -674,7 +623,6 @@ class CoordsAnalysis(Analysis):
             plt.xlabel('Number of Distractors')
             plt.ylabel('Average Euclidean Error')
             plt.ylim(bottom=0)
-            #plt.title(f'Model: {model}')
             plt.legend(title='Label', bbox_to_anchor=(1.05, 1), loc='upper left')
             plt.tight_layout()
             plt.show()
@@ -818,8 +766,7 @@ if __name__ == '__main__':
     p.add_argument('-d','--directories',nargs='+',required=True)
     p.add_argument('-l','--labels',nargs='+',required=True)
     p.add_argument('-g','--groups',nargs='+')
-    p.add_argument('--human')
-    p.add_argument("--humanDataType", choices=['2Among5', 'LightPriors', 'CircleSizes'])
+    p.add_argument("--humanDataType", choices=['2Among5', 'LightPriors', 'CircleSizes'], default=None)
     p.add_argument('-c','--confusion',action='store_true')
     args = p.parse_args()
 
@@ -840,8 +787,7 @@ if __name__ == '__main__':
     )
 
     if args.mode=='cell':
-        common_kwargs["human_csv"]=args.human if args.human else None
-        common_kwargs['human_experiment']=args.humanDataType if args.humanDataType else None
+        common_kwargs['human_experiment']=args.humanDataType
         runner = CellAnalysis(**common_kwargs)
     elif args.mode=='coords':
         runner = CoordsAnalysis(**common_kwargs)
