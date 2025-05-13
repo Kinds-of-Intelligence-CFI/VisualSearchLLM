@@ -17,12 +17,13 @@ class Analysis:
     """
     Base class for different analysis modes.
     """
-    def __init__(self, directories, labels, groups=None, output_dir=None, save_figs=False, confusion=False):
+    def __init__(self, directories, labels, groups=None, output_dir=None, save_figs=False, confusion=False, experiment=None):
         # Basic args
         self.directories = directories
         self.labels = labels
         self.save_figs = save_figs
         self.confusion = confusion
+        self.experiment=experiment
 
         # Output directory
         if output_dir:
@@ -122,10 +123,12 @@ class Analysis:
 class CellAnalysis(Analysis):
 
     def __init__(self, directories, labels, groups=None, output_dir=None,
-                     save_figs=False, confusion=False, human_experiment=None):
-        super().__init__(directories, labels, groups, output_dir, save_figs, confusion)
-        if human_experiment:
-            self.human_experiment=human_experiment
+                     save_figs=False, confusion=False, experiment=None, humanData=False):
+        super().__init__(directories, labels, groups, output_dir, save_figs, confusion, experiment)
+        
+        self.humanData = humanData
+        if self.humanData:
+            
             def clean_columns(df):
                 df = df[(df["Display"] == "Task") & (df["Screen"] == "trial")]
                 spreadsheet_renames = {
@@ -150,10 +153,10 @@ class CellAnalysis(Analysis):
 
             experimentCSVMap = {"2Among5": "e1_numbers", "LightPriors": "e2_light_priors", "CircleSizes":"e3_circle_sizes"}
 
-            experiment = experimentCSVMap[self.human_experiment]
-            df = pd.read_csv(os.path.join(f"{experiment}.csv"))
+            experimentFile = experimentCSVMap[self.experiment]
+            df = pd.read_csv(os.path.join(f"{experimentFile}.csv"))
             df = clean_columns(df)
-            if self.human_experiment == "2Among5":
+            if self.experiment == "2Among5":
                 condition = "colour_type"
                 df['colour_type'] = df['colour_type'].replace({
                     'no_colour': 'Inefficient disjunctive',
@@ -163,11 +166,11 @@ class CellAnalysis(Analysis):
                 bin_edges = [1, 5, 9, 17, 33, 65, 100]
                 bin_labels = ['1–4','5–8','9–16','17–32','33–64','65–99']
 
-            elif self.human_experiment == "LightPriors":
+            elif self.experiment == "LightPriors":
                 condition = "light_direction"
                 bin_edges = [1, 5, 9, 13, 17, 21, 25, 33, 50]
                 bin_labels = ['1–4','5–8','9–12','13–16','17–20','21–24','25-32','33-49']
-            elif selected_experiment == "CircleSizes":
+            elif self.experiment == "CircleSizes":
                 condition = "target_size"
                 bin_edges = [1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 50]
                 bin_labels = ['1–4','5–8','9–12','13–16','17–20','21–24','25-28','29-32','33-36','37-40','41-44','45-49']
@@ -296,13 +299,13 @@ class CellAnalysis(Analysis):
 
     def plot(self, metrics):
 
-        if self.human_df is not None:
+        if self.humanData:
 
             featureMap = {"2Among5": 'colour_type', "LightPriors":'light_direction', 'CircleSizes': 'target_size'}
 
             raw = (
                 self.human_df
-                  .rename(columns={featureMap[self.human_experiment]:'label','distractor_bin':'bin'})
+                  .rename(columns={featureMap[self.experiment]:'label','distractor_bin':'bin'})
                   .groupby(['label','bin'], observed=True)['accuracy']
                   .agg(['mean','std','count'])
                   .reset_index()
@@ -364,12 +367,65 @@ class CellAnalysis(Analysis):
             plt.show()
 
 
+        if self.experiment=="2Among5":
+            edges = np.array([1, 5, 9, 17, 33, 65, 100])   
+            binLabels = ['1–4','5–8','9–16','17–32','33–64','65–99'] 
+        elif self.experiment=="Light Priors":
+            edges = np.array([1, 5, 9, 13, 17, 21, 25, 33, 50])
+            binLabels = ['1–4','5–8','9–12','13–16','17–20','21–24','25-32','33-49']
+        elif self.experiment== "CircleSizes":
+            edges = np.array([1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 50])
+            ['1–4','5–8','9–12','13–16','17–20','21–24','25-28','29-32','33-36','37-40','41-44','45-49']
+
+        mids       = 0.5 * (edges[:-1] + edges[1:])
+        label2mid  = dict(zip(binLabels, mids))
+
+        for model, grp_model in avs_df.groupby('model'):
+            gm = grp_model.copy()
+            
+            # carve into categories that carry your custom labels
+            gm['k_bin'] = pd.cut(gm['k'],
+                                 bins=edges,
+                                 labels=binLabels,
+                                 right=False)
+
+            # numeric x for plotting
+            gm['k_mid'] = gm['k_bin'].map(label2mid)
+
+            agg = (gm
+                   .groupby(['label', 'k_bin'], observed=True)
+                   .agg(acc_mean=('acc', 'mean'),
+                        acc_se   =('acc', 'sem'),
+                        k_mid    =('k_mid', 'first'))
+                   .reset_index()
+                   .sort_values('k_mid'))
+
+            plt.figure(figsize=figSize)
+            print(model)
+            for lab, g in agg.groupby('label'):
+                xs, ys, se = g['k_mid'], g['acc_mean'], g['acc_se']
+                plt.plot(xs, ys, '-o', label=lab)
+                plt.fill_between(xs, ys - 1.96*se, ys + 1.96*se, alpha=0.2)
+
+            plt.xlabel('Number of Distractors (k, binned)')
+            plt.ylabel('Accuracy')
+            plt.ylim(0, 1)
+            plt.xticks(mids, binLabels,  rotation=45, ha='right')             # centres on the mids, text from your list
+            plt.legend(title='Label', bbox_to_anchor=(1.05, 1), loc='upper left')
+            plt.tight_layout()
+            plt.show()
+
+
+
+
+
+        ### 2x2 plot for paper
+
         selected_models = ['gpt-4o', 'claude-sonnet', 'llama90B'] 
         modelTitleMap = {
             'gpt-4o': 'GPT-4o',
             'claude-sonnet': 'Claude Sonnet',
             'llama90B': 'Llama 90B',
-            'claude-haiku': 'Claude Haiku',
         }
 
 
@@ -426,17 +482,17 @@ class CellAnalysis(Analysis):
             #ax.set_xlim(0,99)
             ax.set_ylim(0,1)
             #tick_positions = [0, 20, 40, 60, 80, 99]
-
-            if self.human_experiment == "LightPriors" or self.human_experiment == "CircleSizes":
+            
+            if self.experiment == "LightPriors" or self.experiment == "CircleSizes":
                 tick_positions = [0,10,20,30,40,49]
-            elif self.human_experiment == "2Among5":
+            elif self.experiment == "2Among5":
                 tick_positions = [0,20,40,60,80,99]
             for ax in axes.flatten()[:len(selected_models)]:
                 #ax.set_xlim(0, 99)
                 ax.set_xticks(tick_positions)
                 ax.set_xticklabels([str(t) for t in tick_positions])
 
-        if humanStats is not None:
+        if self.humanData:
             axH = axes[1,1]
             for hlabel, hgrp in humanStats.groupby('label'):
                 hgrp = hgrp.sort_values('x')
@@ -669,7 +725,7 @@ class CoordsAnalysis(Analysis):
            ax.set_title(pretty)
            ax.set_xlabel('Number of Distractors')
            #ax.set_xlim(0, 99)
-           ax.set_ylim(0, 300)
+           
            # only left‐most keeps the y‐label
            if ax is axes[0]:
                ax.set_ylabel('Average Euclidean Error')
@@ -678,8 +734,17 @@ class CoordsAnalysis(Analysis):
            ax.set_ylim(bottom=0)
 
 
-           #tick_positions = [0, 20, 40, 60, 80, 99]
-           tick_positions = [0,10,20,30,40,49]
+           ylimMap = {"2Among5": 350, "LightPriors":300 , "CircleSizes":450}
+           ax.set_ylim(0, ylimMap[self.experiment])
+           if self.experiment == "2Among5":
+                tick_positions = [0, 20, 40, 60, 80, 99]
+
+           elif self.experiment in ["LightPriors", "CircleSizes"]:
+                tick_positions = [0,10,20,30,40,49]
+           
+
+
+
            for ax in axes.flatten()[:len(selected_models)]:
                 #ax.set_xlim(0, 99)
                 ax.set_xticks(tick_positions)
@@ -766,7 +831,8 @@ if __name__ == '__main__':
     p.add_argument('-d','--directories',nargs='+',required=True)
     p.add_argument('-l','--labels',nargs='+',required=True)
     p.add_argument('-g','--groups',nargs='+')
-    p.add_argument("--humanDataType", choices=['2Among5', 'LightPriors', 'CircleSizes'], default=None)
+    p.add_argument("-e", "--experiment", choices=['2Among5', 'LightPriors', 'CircleSizes'], required=True)
+    p.add_argument("--humanData", action='store_true')
     p.add_argument('-c','--confusion',action='store_true')
     args = p.parse_args()
 
@@ -784,10 +850,12 @@ if __name__ == '__main__':
         groups=args.groups,
         save_figs=save_figs,
         confusion=args.confusion,
+        experiment = args.experiment,
+
     )
 
     if args.mode=='cell':
-        common_kwargs['human_experiment']=args.humanDataType
+        common_kwargs["humanData"]=args.humanData
         runner = CellAnalysis(**common_kwargs)
     elif args.mode=='coords':
         runner = CoordsAnalysis(**common_kwargs)
