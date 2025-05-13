@@ -120,6 +120,113 @@ class Analysis:
 
 
 class CellAnalysis(Analysis):
+
+    def __init__(self, directories, labels, groups=None, output_dir=None,
+                     save_figs=False, confusion=False, human_csv=None, human_experiment=None):
+        super().__init__(directories, labels, groups, output_dir, save_figs, confusion)
+        if human_csv:
+            self.human_experiment=human_experiment
+            def clean_columns(df):
+                df = df[(df["Display"] == "Task") & (df["Screen"] == "trial")]
+                spreadsheet_renames = {
+                    col: col.split("Spreadsheet: ")[1]
+                    for col in df.columns
+                    if col.startswith("Spreadsheet: ")
+                }
+                fixed_renames = {
+                    "Participant Public ID": "PID",
+                    "Trial Number": "trial",
+                    "Response": "response",
+                    "Reaction Time": "rt",
+                    "Correct": "accuracy"
+                }
+                all_renames = {**fixed_renames, **spreadsheet_renames}
+                df = df[list(all_renames.keys())]
+                df.rename(columns=all_renames, inplace=True)
+                df.rename({"answer":"correct_answer"}, inplace=True)
+                df['accuracy'] = df['accuracy'].fillna(0).astype(int)
+                return df
+
+            ## load results
+            experiments = ["e1_numbers","e2_light_priors", "e3_circle_sizes"]
+            if human_experiment == None:
+                raise Exception("Invalid experiment chosen")
+            elif human_experiment == "2Among5":
+                selected_experiment=0
+            elif human_experiment == "LightPriors":
+                selected_experiment = 1
+            elif human_experiment == "CircleSizes":
+                selected_experiment=2
+            experiment = experiments[selected_experiment]
+            df = pd.read_csv(os.path.join(f"{experiment}.csv"))
+            df = clean_columns(df)
+            if selected_experiment == 0:
+                condition = "colour_type"
+                df['colour_type'] = df['colour_type'].replace({
+                    'no_colour': 'Inefficient disjunctive',
+                    'colour': 'Efficient disjunctive',
+                    'conjunctive': 'Conjunctive'
+                })
+                bin_edges = [1, 5, 9, 17, 33, 65, 100]
+                bin_labels = [
+                    '1–4',
+                    '5–8',
+                    '9–16',
+                    '17–32',
+                    '33–64',
+                    '65–99'
+                ]
+
+            elif selected_experiment == 1:
+                condition = "light_direction"
+                bin_edges = [1, 5, 9, 13, 17, 21, 25, 33, 50]
+                bin_labels = [
+                    '1–4',
+                    '5–8',
+                    '9–12',
+                    '13–16',
+                    '17–20',
+                    '21–24',
+                    '25-32',
+                    '33-49'
+                ]
+            elif selected_experiment == 2:
+                condition = "target_size"
+                bin_edges = [1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 50]
+                bin_labels = [
+                    '1–4',
+                    '5–8',
+                    '9–12',
+                    '13–16',
+                    '17–20',
+                    '21–24',
+                    '25-28',
+                    '29-32',
+                    '33-36',
+                    '37-40',
+                    '41-44',
+                    '45-49'
+                ]
+               
+            df['distractor_bin'] = pd.cut(df['num_distractors'],
+                                          bins=bin_edges,
+                                          labels=bin_labels,
+                                          right=False)
+
+            ## remove dodgy participants
+            participant_accuracy = df.groupby('PID')['accuracy'].mean()
+            accuracy_threshold = 0.25
+            valid_participants = participant_accuracy[participant_accuracy >= accuracy_threshold].index
+            total_participants = len(participant_accuracy)
+            filtered_participants = total_participants - len(valid_participants)
+            print(f"Total participants: {total_participants}")
+            print(f"Participants below threshold ({accuracy_threshold*100}%): {filtered_participants}")
+            print(f"Participants remaining: {len(valid_participants)}")
+            self.human_df = df[df['PID'].isin(valid_participants)]
+        else:
+            self.human_df=None
+
+
     @property
     def mode(self):
         return 'cell'
@@ -198,7 +305,7 @@ class CellAnalysis(Analysis):
                 cm_df = pd.DataFrame(cm, index=classes+['Invalid'], columns=classes+['Invalid'])
                 lines.append(f"Confusion Matrix:\n{cm_df}\n")
 
-        # 3) build the per-cell success rates and accuracies vs k as before
+        # 3) build the per-cell success rates and accuracies vs k 
         succ = []
         for (lab,mod), g in df.groupby(['label','model']):
             for cell, grp in g.groupby('actual_label'):
@@ -224,6 +331,56 @@ class CellAnalysis(Analysis):
         )
 
     def plot(self, metrics):
+
+        if self.human_df is not None:
+            if self.human_experiment == "2Among5":
+                raw = (
+                    self.human_df
+                      .rename(columns={'colour_type':'label', 'distractor_bin':'bin'})
+                      .groupby(['label','bin'], observed=True)['accuracy']
+                      .agg(['mean','std','count'])
+                      .reset_index()
+                      .rename(columns={'mean':'acc'})
+                )
+            elif self.human_experiment == "LightPriors":
+                raw = (
+                    self.human_df
+                      .rename(columns={'light_direction':'label','distractor_bin':'bin'})
+                      .groupby(['label','bin'], observed=True)['accuracy']
+                      .agg(['mean','std','count'])
+                      .reset_index()
+                      .rename(columns={'mean':'acc'})
+                )
+            elif self.human_experiment == "CircleSizes":
+                raw = (
+                    self.human_df
+                      .rename(columns={'target_size':'label','distractor_bin':'bin'})
+                      .groupby(['label','bin'], observed=True)['accuracy']
+                      .agg(['mean','std','count'])
+                      .reset_index()
+                      .rename(columns={'mean':'acc'})
+                )
+            raw['se'] = raw['std'] / np.sqrt(raw['count'])
+
+            # normalize & split bin-strings robustly
+            bin_str = raw['bin'].astype(str) \
+                         .str.replace('–','-',regex=False) \
+                         .str.strip()
+            lo_hi = bin_str.str.split('-', expand=True)
+            lo_hi.columns = ['lo','hi']
+            lo_hi['lo'] = pd.to_numeric(lo_hi['lo'], errors='coerce')
+            lo_hi['hi'] = pd.to_numeric(lo_hi['hi'], errors='coerce')
+            valid = lo_hi['lo'].notna() & lo_hi['hi'].notna()
+            raw = raw[valid].reset_index(drop=True)
+            lo_hi = lo_hi[valid].reset_index(drop=True)
+
+            # compute mid-points
+            raw['x'] = (lo_hi['lo'] + lo_hi['hi']) / 2
+
+            humanStats = raw
+        else:
+            humanStats=None
+
         succ_df = metrics['success_df']
         avs_df = metrics['avs_df']
 
@@ -270,9 +427,27 @@ class CellAnalysis(Analysis):
         # bump up font for paper
         plt.rcParams.update({'font.size': 18})
 
-        fig, axes = plt.subplots(2, 2, figsize=(16, 12), sharex=True, sharey=True)
+        fig, axes = plt.subplots(2, 2, figsize=(16, 12), sharex=False, sharey=True)
 
-        for ax, model in zip(axes.flatten(), selected_models):
+
+
+        avs_df['label']      = avs_df['label'].str.title()
+        if humanStats is not None:
+            humanStats['label'] = humanStats['label'].str.title()
+
+
+       
+        all_labels = sorted(
+            set(avs_df['label'].unique())
+            | set(humanStats['label'].unique() if humanStats is not None else [])
+        )
+        cycle = rcParams['axes.prop_cycle'].by_key()['color']
+        color_map = {lbl: cycle[i % len(cycle)] for i, lbl in enumerate(all_labels)}
+
+
+
+
+        for ax, model in zip(axes.flatten()[:len(selected_models)], selected_models):
             grp_model = avs_df[avs_df['model'] == model]
             if grp_model.empty:
                 ax.set_title(f"{model} (no data)")
@@ -281,16 +456,72 @@ class CellAnalysis(Analysis):
             for label, grp in grp_model.groupby('label'):
                 grp = grp.sort_values('k')
                 prettyMod = modelTitleMap.get(model, model)
-                ax.plot(grp['k'], grp['acc'], '-o', label=label)
-                ax.fill_between(grp['k'],
-                                grp['acc'] - 1.96*grp['se'],
-                                grp['acc'] + 1.96*grp['se'],
-                                alpha=0.2)
+           
+                ax.plot(
+                       grp['k'], grp['acc'],
+                       '-o',
+                       color=color_map[label],
+                       label=label
+                )
+                ax.fill_between(
+                    grp['k'],
+                    grp['acc'] - 1.96*grp['se'],
+                    grp['acc'] + 1.96*grp['se'],
+                    color=color_map[label],
+                    alpha=0.2
+                )
             prettyMod = modelTitleMap.get(model, model)
             ax.set_title(prettyMod)
             ax.set_xlabel('Number of Distractors (k)')
             ax.set_ylabel('Accuracy')
+            #ax.set_xlim(0,99)
             ax.set_ylim(0,1)
+            #tick_positions = [0, 20, 40, 60, 80, 99]
+
+            if self.human_experiment == "LightPriors" or self.human_experiment == "CircleSizes":
+                tick_positions = [0,10,20,30,40,49]
+            elif self.human_experiment == "2Among5":
+                tick_positions = [0,20,40,60,80,99]
+            for ax in axes.flatten()[:len(selected_models)]:
+                #ax.set_xlim(0, 99)
+                ax.set_xticks(tick_positions)
+                ax.set_xticklabels([str(t) for t in tick_positions])
+
+        if humanStats is not None:
+            axH = axes[1,1]
+            for hlabel, hgrp in humanStats.groupby('label'):
+                hgrp = hgrp.sort_values('x')
+    
+                axH.plot(
+                    hgrp['x'], hgrp['acc'],
+                    '-o',
+                    color=color_map[hlabel],
+                    linewidth=2,
+                    label=hlabel
+                )
+                axH.fill_between(
+                    hgrp['x'],
+                    hgrp['acc'] - 1.96*hgrp['se'],
+                    hgrp['acc'] + 1.96*hgrp['se'],
+                    color=color_map[hlabel],
+                    alpha=0.2
+                )
+
+
+            xticks = hgrp['x'].unique()  # or sorted(humanStats['x'].unique())
+            xlabels = raw['bin'].unique()  # same order as xticks after sorting
+        # to be safe:
+            order = np.argsort(xticks)
+            xticks = xticks[order]
+            xlabels = np.array(raw['bin'].unique())[order]
+
+            axH.set_xticks(xticks)
+            axH.set_xticklabels(xlabels, rotation=45, ha='right')
+
+            axH.set_title('Human')
+            axH.set_xlabel('Number of Distractors (k)')
+            axH.set_ylabel('Accuracy')
+            axH.set_ylim(0,1)
 
 
         for ax in axes[0]:
@@ -359,7 +590,6 @@ class CoordsAnalysis(Analysis):
                 f"Valid={correct} ({accPct:.2f}%)"
             )
 
-        # 2) compute mean ± SE on all rows (invalid ones carry maxError)
         errorStats = (
             df
             .groupby(['label', 'model', 'num_distractors'])['euclidean_error']
@@ -454,67 +684,75 @@ class CoordsAnalysis(Analysis):
         modelTitleMap = {
             'gpt-4o': 'GPT-4o',
             'claude-sonnet': 'Claude Sonnet',
-            'llama90B': 'Llama 90B',
-            'claude-haiku': 'Claude Haiku',
+            'llama90B': 'Llama 90B'
         }
 
         plt.rcParams.update({'font.size': 18})
 
 
-        # --- 2×2 SUBPLOT PANEL FOR FOUR MODELS ---
-        fig, axes = plt.subplots(2, 2, figsize=(16, 12), sharex=True, sharey=True)
-
-        for ax, model in zip(axes.flatten(), selected_models):
-            pretty = modelTitleMap.get(model, model)
-            grp = stats[stats['model'] == model].sort_values('num_distractors')
-            if grp.empty:
-                ax.set_title(f"{pretty}\n(no data)")
-                continue
-
-            for rawLab, sub in grp.groupby('label'):
-                ax.plot(sub['num_distractors'], sub['avg_error'], '-o', label=rawLab)
-                ax.fill_between(
-                    sub['num_distractors'],
-                    sub['avg_error'] - 1.96*sub['se'],
-                    sub['avg_error'] + 1.96*sub['se'],
-                    alpha=0.2
-                )
-            ax.set_title(pretty)
-            ax.set_xlabel('')   # clear by default—you’ll restore only bottom
-            ax.set_ylabel('')   # clear by default—only left will show
-
-        # clear top x-labels, right y-labels
-        for ax in axes.flatten():
-            ax.set_ylabel('')
-
-            # add one figure-level y-label (centered alongside the left column)
-            # if you have Matplotlib ≥3.4:
-            fig.supylabel(
-                'Average Euclidean Error',
-                x=0.032,       # tweak horizontal position;  
-                fontsize=24,
-                va='center'
-            )
-
-        # restore bottom & left labels
-        for ax in axes[1]:
-            ax.set_xlabel('Number of Distractors')
-       
-        # single legend below
-        handles, labels = axes[0,0].get_legend_handles_labels()
-        fig.legend(
-            handles, labels,
-            loc='lower center',
-            bbox_transform=fig.transFigure,
-            bbox_to_anchor=(0.5, 0.02),
-            ncol=len(labels),
-            fontsize=20,
-            frameon=False
+        fig, axes = plt.subplots(
+           1, len(selected_models),
+           figsize=(18, 5),      # wider than tall
+           sharey=True
         )
 
-        fig.tight_layout(rect=[0, 0.1, 1, 0.95])
+        for ax, model in zip(axes, selected_models):
+           pretty = modelTitleMap.get(model, model)
+           grp   = stats[stats['model'] == model].sort_values('num_distractors')
+
+           if grp.empty:
+               ax.set_title(f"{pretty}\n(no data)")
+               continue
+
+           for lab, sub in grp.groupby('label'):
+               ax.plot(
+                   sub['num_distractors'],
+                   sub['avg_error'],
+                   '-o',
+                   label=lab
+               )
+               ax.fill_between(
+                   sub['num_distractors'],
+                   sub['avg_error'] - 1.96*sub['se'],
+                   sub['avg_error'] + 1.96*sub['se'],
+                   alpha=0.2
+               )
+
+           ax.set_title(pretty)
+           ax.set_xlabel('Number of Distractors')
+           #ax.set_xlim(0, 99)
+           ax.set_ylim(0, 300)
+           # only left‐most keeps the y‐label
+           if ax is axes[0]:
+               ax.set_ylabel('Average Euclidean Error')
+           else:
+               ax.set_ylabel('')
+           ax.set_ylim(bottom=0)
+
+
+           #tick_positions = [0, 20, 40, 60, 80, 99]
+           tick_positions = [0,10,20,30,40,49]
+           for ax in axes.flatten()[:len(selected_models)]:
+                #ax.set_xlim(0, 99)
+                ax.set_xticks(tick_positions)
+                ax.set_xticklabels([str(t) for t in tick_positions])
+
+        # single legend below all three
+        handles, labels = axes[0].get_legend_handles_labels()
+        fig.legend(
+           handles, labels,
+           loc='lower center',
+           bbox_transform=fig.transFigure,
+           bbox_to_anchor=(0.5, -0.03),
+           ncol=len(labels),
+           fontsize=16,
+           frameon=False
+        )
+
+
+
+        plt.tight_layout(rect=[0, 0.05, 1, 1])
         plt.show()
-        # ---------------------------------------------
 
 
 
@@ -580,6 +818,8 @@ if __name__ == '__main__':
     p.add_argument('-d','--directories',nargs='+',required=True)
     p.add_argument('-l','--labels',nargs='+',required=True)
     p.add_argument('-g','--groups',nargs='+')
+    p.add_argument('--human')
+    p.add_argument("--humanDataType", choices=['2Among5', 'LightPriors', 'CircleSizes'])
     p.add_argument('-c','--confusion',action='store_true')
     args = p.parse_args()
 
@@ -596,9 +836,12 @@ if __name__ == '__main__':
         labels=args.labels,
         groups=args.groups,
         save_figs=save_figs,
-        confusion=args.confusion
+        confusion=args.confusion,
     )
+
     if args.mode=='cell':
+        common_kwargs["human_csv"]=args.human if args.human else None
+        common_kwargs['human_experiment']=args.humanDataType if args.humanDataType else None
         runner = CellAnalysis(**common_kwargs)
     elif args.mode=='coords':
         runner = CoordsAnalysis(**common_kwargs)
