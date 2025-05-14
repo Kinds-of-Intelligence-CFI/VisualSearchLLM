@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from matplotlib import rcParams
-from scipy.stats import linregress, pearsonr, spearmanr
 
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
@@ -245,14 +244,8 @@ class CellAnalysis(Analysis):
     def compute_metrics(self, df):
         print(df)
         print(df.columns)
-        # ---------------------------------------------------------------------
-        # 1) Compute classification & basic accuracy text (we’ll hold it aside)
-        # ---------------------------------------------------------------------
-        # (we'll not print this immediately but re-generate per-model below)
-        # ---------------------------------------------------------------------
 
-        # ---------------------------------------------------------------------
-        # 2) Build per-cell success & acc-vs-k tables as before
+
         # ---------------------------------------------------------------------
         succ = []
         for (lab,mod), g in df.groupby(['label','model']):
@@ -273,35 +266,6 @@ class CellAnalysis(Analysis):
                 avs.append({'label':lab,'model':mod,'k':k,'acc':acc,'se':se})
         avs_df = pd.DataFrame(avs)
 
-        # ---------------------------------------------------------------------
-        # 3) Run regressions & correlations on avs_df
-        # ---------------------------------------------------------------------
-        reg = []
-        for (lab,mod), grp in avs_df.groupby(['label','model']):
-            xs = grp['k'].values
-            ys = grp['acc'].values
-            if len(xs) > 1:
-                lin = linregress(xs, ys)
-                pr_r, pr_p   = pearsonr(xs, ys)
-                sp_r, sp_p   = spearmanr(xs, ys)
-                reg.append({
-                    'label':      lab,
-                    'model':      mod,
-                    'slope':      lin.slope,
-                    'intercept':  lin.intercept,
-                    'r_squared':  lin.rvalue**2,
-                    'p_value':    lin.pvalue,
-                    'stderr':     lin.stderr,
-                    'pearson_r':  pr_r,
-                    'pearson_p':  pr_p,
-                    'spearman_r': sp_r,
-                    'spearman_p': sp_p
-                })
-        reg_df = pd.DataFrame(reg)
-        # -------------------------------
-        # 2-way ANOVA per model (Label × k)
-        # -------------------------------
-        
 
         # ---------------------------------------------------------------------
         # 4) Build a text summary *grouped by model*
@@ -334,27 +298,23 @@ class CellAnalysis(Analysis):
                     labels=classes,
                     zero_division=0
                 )
-                #for rpt_line in report.splitlines():
-                 #    lines.append(f"    {rpt_line}")
 
-                # 4c) regression & correlation
-                row = reg_df[(reg_df['model']==mod)&(reg_df['label']==lab)].iloc[0]
-                lines.append(
-                    f"    LinReg: acc = {row['slope']:.4f}·k + {row['intercept']:.3f}  "
-                    f"(R²={row['r_squared']:.3f}, p={row['p_value']:.3g})"
+                pred_counts = g['predicted_label'].value_counts(normalize=True)
+                pred_props = {label: pred_counts.get(label, 0) for label in classes}
+
+                pred_prop_line = "  Predicted Proportions: " + "  ".join(
+                    f"{label}={prop*100:.1f}%" for label, prop in pred_props.items()
                 )
-                lines.append(
-                    f"    Pearson r={row['pearson_r']:.3f} (p={row['pearson_p']:.3g}); "
-                    f"Spearman ρ={row['spearman_r']:.3f} (p={row['spearman_p']:.3g})"
-                )
+                lines.append(pred_prop_line)
+
+
+                for rpt_line in report.splitlines():
+                    lines.append(f"    {rpt_line}")
+
 
             lines.append("")  # blank line between models
 
         text_output = "\n".join(lines) + "\n"
-
-
-
-
 
 
         # ---------------------------------------------------------------------
@@ -363,7 +323,6 @@ class CellAnalysis(Analysis):
         metrics = {
             'success_df': succ_df,
             'avs_df':     avs_df,
-            'regression': reg_df
         }
         return metrics, text_output
 
@@ -653,6 +612,7 @@ class CoordsAnalysis(Analysis):
     def preprocess(self, df):
         # flag rows with no error as invalid
         df['is_invalid'] = df['euclidean_error'].isna()
+        df['is_outside'] = (df['selected_x'] > 400) | (df['selected_y'] > 400)
 
         # convert distractor counts to int
         df['num_distractors'] = pd.to_numeric(df['num_distractors'], errors='coerce').astype(int)
@@ -664,6 +624,8 @@ class CoordsAnalysis(Analysis):
     
     def compute_metrics(self, df):
         # clamp invalid errors to the image diagonal
+
+
         maxError = np.hypot(400, 400)  # ≈565.7 px
         df = df.copy()
         df.loc[df['is_invalid'], 'euclidean_error'] = maxError
@@ -707,6 +669,14 @@ class CoordsAnalysis(Analysis):
         )
         rates['accuracy_pct'] = rates['is_valid'] * 100
 
+
+        outside_rate = (
+            df_all
+            .groupby(['label', 'model'])['is_outside'].mean().reset_index()
+            )
+        outside_rate["outside_pct"]=outside_rate['is_outside']*100
+        print(outside_rate)
+
         # grab the same color cycle you use in line plots
         color_cycle = rcParams['axes.prop_cycle'].by_key()['color']
 
@@ -731,6 +701,24 @@ class CoordsAnalysis(Analysis):
                 fname = f'coords_valid_rate_{model}.png'
                 plt.savefig(os.path.join(self.output_dir, fname))
             plt.show()
+
+            # one bar‐chart per model
+        for model, grp in outside_rate.groupby('model'):
+            print(model)
+            plt.figure(figsize=(8, 5))
+            # assign each bar its label’s color
+            bar_colors = [color_map[lab] for lab in grp['label']]
+            plt.bar(grp['label'], grp['outside_pct'], color=bar_colors)
+            plt.xlabel('Label')
+            plt.ylabel('Outside Rate (%)')
+            #plt.title(f'Valid/Correct Rate for Model: {model}')
+            plt.xticks(rotation=45, ha='right')
+            plt.tight_layout()
+            if self.save_figs and self.output_dir:
+                fname = f'coords_outside_rate_{model}.png'
+                plt.savefig(os.path.join(self.output_dir, fname))
+            plt.show()
+
 
 
 
@@ -860,66 +848,9 @@ class CoordsAnalysis(Analysis):
         plt.show()
 
 
-
-class PresenceAnalysis(Analysis):
-    @property
-    def mode(self): return 'presence'
-    @property
-    def file_suffix(self): return '_results_Presence.csv'
-
-    def preprocess(self, df):
-        df['sel'] = pd.to_numeric(df['selected_presence'],errors='coerce')
-        df['act'] = pd.to_numeric(df['actual_presence'],errors='coerce')
-        df['correct'] = df['sel']==df['act']
-        # apply grouping labels
-        df['label'] = df['source_dir'].map(self.group_map).fillna(df['label'])
-        return df
-
-    def compute_metrics(self, df):
-        out=''
-        avs=[]
-        for (lab,mod), g in df.groupby(['label','model']):
-            out += f"Label={lab} Model={mod} Total={len(g)} Acc={g['correct'].mean()*100:.2f}%\n"
-            out += classification_report(g['act'],g['sel'],zero_division=0) + '\n'
-            for k,grp in g.groupby('num_distractors'):
-                acc=grp['correct'].mean(); se=math.sqrt(acc*(1-acc)/len(grp)) if len(grp)>1 else 0
-                avs.append({'label':lab,'model':mod,'k':k,'acc':acc,'se':se})
-        return ({'avs_df':pd.DataFrame(avs)}, out)
-
-    def plot(self, metrics):
-        df=metrics['avs_df']
-        # Combined
-        plt.figure(figsize=(8,6))
-        for (lab,mod), grp in df.groupby(['label','model']):
-            grp_sorted = grp.sort_values('k')
-            plt.plot(grp_sorted['k'],grp_sorted['acc'],'-o',label=f"{lab}-{mod}")
-            plt.fill_between(grp_sorted['k'],grp_sorted['acc']-1.96*grp_sorted['se'],grp_sorted['acc']+1.96*grp_sorted['se'],alpha=0.2)
-        plt.xlabel('Number of Distractors (k)')
-        plt.ylabel('Accuracy')
-        plt.ylim(0,1)
-        plt.legend(title='Label - Model', bbox_to_anchor=(1.05,1), loc='upper left')
-        plt.tight_layout()
-        plt.show()
-
-        # Individual plots per model
-        for model, grp_model in df.groupby('model'):
-            plt.figure(figsize=(8,6))
-            for lab, grp in grp_model.groupby('label'):
-                grp_sorted = grp.sort_values('k')
-                plt.plot(grp_sorted['k'],grp_sorted['acc'],'-o',label=lab)
-                plt.fill_between(grp_sorted['k'],grp_sorted['acc']-1.96*grp_sorted['se'],grp_sorted['acc']+1.96*grp_sorted['se'],alpha=0.2)
-            plt.xlabel('Number of Distractors (k)')
-            plt.ylabel('Accuracy')
-            plt.title(f'Model: {model}')
-            plt.ylim(0,1)
-            plt.legend(title='Label', bbox_to_anchor=(1.05,1), loc='upper left')
-            plt.tight_layout()
-            plt.show()
-
-
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
-    p.add_argument('-m','--mode',choices=['cell','coords','presence'],required=True)
+    p.add_argument('-m','--mode',choices=['cell','coords'],required=True)
     p.add_argument('-d','--directories',nargs='+',required=True)
     p.add_argument('-l','--labels',nargs='+',required=True)
     p.add_argument('-g','--groups',nargs='+')
