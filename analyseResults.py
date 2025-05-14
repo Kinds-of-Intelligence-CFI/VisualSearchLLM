@@ -454,7 +454,13 @@ class CellAnalysis(Analysis):
             plt.ylabel('Accuracy')
             plt.ylim(0, 1)
             plt.xticks(mids, binLabels,  rotation=45, ha='right')             # centres on the mids, text from your list
-            plt.legend(title='Label', bbox_to_anchor=(1.05, 1), loc='upper left')
+            plt.legend(
+                loc='lower center',
+                bbox_to_anchor=(0.5, -0.4),
+                ncol=len(grp_model.groupby('label')),
+                fontsize=20,
+                frameon=False
+            )
             plt.tight_layout()
             plt.show()
 
