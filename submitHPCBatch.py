@@ -49,4 +49,4 @@ for request_file in request_files:
 for params in param_sets:
     export_str = ",".join([f"{key}={value}" for key, value in params.items()])
     print(f"Submitting job with: {export_str}")
-    subprocess.run(["sbatch", "--export", export_str, "llamaSlurmTest.sh"])
+    subprocess.run(["sbatch", "--export", export_str, "llamaSlurm.sh"])
