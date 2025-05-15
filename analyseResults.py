@@ -197,7 +197,7 @@ class CellAnalysis(Analysis):
         df['predicted_cell_parsed'] = df['predicted_cell'].apply(self.parse_cell)
 
         # flag invalid predictions
-        df['is_invalid'] = df['predicted_cell_parsed'].isna()
+        df['is_invalid'] = ~df['predicted_cell_parsed'].isin([(1,1),(1,2),(2,1),(2,2)])
 
         # wherever invalid, mark correct=False
         df.loc[df['is_invalid'], 'correct'] = False
