@@ -10,9 +10,6 @@ import seaborn as sns
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from matplotlib import rcParams
 
-import statsmodels.api as sm
-import statsmodels.formula.api as smf
-from statsmodels.stats.anova import anova_lm
 import itertools
 
 
@@ -135,33 +132,11 @@ class CellAnalysis(Analysis):
         self.humanData = humanData
         if self.humanData:
             
-            def clean_columns(df):
-                df = df[(df["Display"] == "Task") & (df["Screen"] == "trial")]
-                spreadsheet_renames = {
-                    col: col.split("Spreadsheet: ")[1]
-                    for col in df.columns
-                    if col.startswith("Spreadsheet: ")
-                }
-                fixed_renames = {
-                    "Participant Public ID": "PID",
-                    "Trial Number": "trial",
-                    "Response": "response",
-                    "Reaction Time": "rt",
-                    "Correct": "accuracy"
-                }
-                all_renames = {**fixed_renames, **spreadsheet_renames}
-                df = df[list(all_renames.keys())]
-                df.rename(columns=all_renames, inplace=True)
-                df.rename({"answer":"correct_answer"}, inplace=True)
-                df['accuracy'] = df['accuracy'].fillna(0).astype(int)
-                return df
-
-
-            experimentCSVMap = {"2Among5": "e1_numbers", "LightPriors": "e2_light_priors", "CircleSizes":"e3_circle_sizes"}
+            experimentCSVMap = {"2Among5": "e1_numbers_processed", "LightPriors": "e2_light_priors_processed", "CircleSizes":"e3_circle_sizes_processed"}
 
             experimentFile = experimentCSVMap[self.experiment]
-            df = pd.read_csv(os.path.join(f"{experimentFile}.csv"))
-            df = clean_columns(df)
+            df = pd.read_csv(os.path.join(f"humanResults/{experimentFile}.csv"))
+            #df = clean_columns(df)
             if self.experiment == "2Among5":
                 condition = "colour_type"
                 df['colour_type'] = df['colour_type'].replace({
@@ -186,7 +161,7 @@ class CellAnalysis(Analysis):
                                           labels=bin_labels,
                                           right=False)
 
-            ## remove dodgy participants
+            ## remove low scoring participants
             participant_accuracy = df.groupby('PID')['accuracy'].mean()
             accuracy_threshold = 0.25
             valid_participants = participant_accuracy[participant_accuracy >= accuracy_threshold].index
@@ -242,11 +217,6 @@ class CellAnalysis(Analysis):
         return df
 
     def compute_metrics(self, df):
-        print(df)
-        print(df.columns)
-
-
-        # ---------------------------------------------------------------------
         succ = []
         for (lab,mod), g in df.groupby(['label','model']):
             for cell, grp in g.groupby('actual_label'):
@@ -268,7 +238,7 @@ class CellAnalysis(Analysis):
 
 
         # ---------------------------------------------------------------------
-        # 4) Build a text summary *grouped by model*
+        # Build a text summary *grouped by model*
         # ---------------------------------------------------------------------
         lines = []
         for mod in sorted(df['model'].unique()):
@@ -283,14 +253,14 @@ class CellAnalysis(Analysis):
                 invalid_pct   = (invalid_count/total*100) if total else 0
                 acc_pct       = (acc_count/total*100)     if total else 0
 
-                # 4a) summary line
+                # summary line
                 lines.append(
                     f"  Label={lab}  Total={total}  "
                     f"Invalid={invalid_count} ({invalid_pct:.2f}%)  "
                     f"Acc={acc_pct:.2f}%"
                 )
 
-                # 4b) classification report
+                # classification report
                 classes = sorted(g['actual_label'].unique())
                 report = classification_report(
                     g['actual_label'],
@@ -298,28 +268,16 @@ class CellAnalysis(Analysis):
                     labels=classes,
                     zero_division=0
                 )
-
                 pred_counts = g['predicted_label'].value_counts(normalize=True)
                 pred_props = {label: pred_counts.get(label, 0) for label in classes}
-
                 pred_prop_line = "  Predicted Proportions: " + "  ".join(
                     f"{label}={prop*100:.1f}%" for label, prop in pred_props.items()
                 )
                 lines.append(pred_prop_line)
-
-
                 for rpt_line in report.splitlines():
                     lines.append(f"    {rpt_line}")
-
-
             lines.append("")  # blank line between models
-
         text_output = "\n".join(lines) + "\n"
-
-
-        # ---------------------------------------------------------------------
-        # 5) Return all of your metric DataFrames plus the new text
-        # ---------------------------------------------------------------------
         metrics = {
             'success_df': succ_df,
             'avs_df':     avs_df,
@@ -331,9 +289,7 @@ class CellAnalysis(Analysis):
     def plot(self, metrics):
 
         if self.humanData:
-
             featureMap = {"2Among5": 'colour_type', "LightPriors":'light_direction', 'CircleSizes': 'target_size'}
-
             raw = (
                 self.human_df
                   .rename(columns={featureMap[self.experiment]:'label','distractor_bin':'bin'})
@@ -367,24 +323,6 @@ class CellAnalysis(Analysis):
         succ_df = metrics['success_df']
         avs_df = metrics['avs_df']
 
-        # Combined accuracy vs distractors per label-model
-        plt.figure(figsize=figSize)
-        for (lab,mod), grp in avs_df.groupby(['label','model']):
-            xs, ys, se = grp['k'], grp['acc'], grp['se']
-            plt.plot(xs,ys,'-o',label=f"{lab}-{mod}")
-            plt.fill_between(xs, ys-1.96*se, ys+1.96*se, alpha=0.2)
-        plt.xlabel('Number of Distractors (k)')
-        plt.ylabel('Accuracy')
-        plt.ylim(0,1)
-        plt.legend(
-                loc='lower center',
-                bbox_to_anchor=(0.5, -0.25),
-                ncol=len(avs_df.groupby('label')),
-                fontsize=20,
-                frameon=False
-            )
-        plt.tight_layout()
-        plt.show()
 
         # Individual plots per model, comparing labels
         for model, grp_model in avs_df.groupby('model'):
@@ -463,10 +401,6 @@ class CellAnalysis(Analysis):
             )
             plt.tight_layout()
             plt.show()
-
-
-
-
 
         ### 2x2 plot for paper
 
@@ -708,7 +642,7 @@ class CoordsAnalysis(Analysis):
                 plt.savefig(os.path.join(self.output_dir, fname))
             plt.show()
 
-            # one bar‐chart per model
+        # one bar‐chart per model
         for model, grp in outside_rate.groupby('model'):
             print(model)
             plt.figure(figsize=(8, 5))
@@ -724,26 +658,7 @@ class CoordsAnalysis(Analysis):
                 fname = f'coords_outside_rate_{model}.png'
                 plt.savefig(os.path.join(self.output_dir, fname))
             plt.show()
-
-
-
-
         stats = metrics['error_stats']
-
-        # Combined plot with 95% CI
-        plt.figure(figsize=figSize)
-        for (lab, mod), grp in stats.groupby(['label', 'model']):
-            grp = grp.sort_values('num_distractors')
-            xs = grp['num_distractors']
-            ys = grp['avg_error']
-            se = grp['se']
-            plt.plot(xs, ys, '-o', label=f"{lab}-{mod}")
-            plt.fill_between(xs, ys - 1.96 * se, ys + 1.96 * se, alpha=0.2)
-        plt.xlabel('Number of Distractors')
-        plt.ylabel('Average Euclidean Error')
-        plt.legend(title='Label - Model', bbox_to_anchor=(1.05, 1), loc='upper left')
-        plt.tight_layout()
-        plt.show()
 
         # Individual plots per model
         for model, grp_model in stats.groupby('model'):
@@ -768,7 +683,6 @@ class CoordsAnalysis(Analysis):
             )
             plt.tight_layout()
             plt.show()
-
 
         selected_models = ['gpt-4o', 'claude-sonnet','llama90B'] 
         modelTitleMap = {
@@ -810,7 +724,6 @@ class CoordsAnalysis(Analysis):
 
            ax.set_title(pretty)
            ax.set_xlabel('Number of Distractors')
-           #ax.set_xlim(0, 99)
            
            # only left‐most keeps the y‐label
            if ax is axes[0]:
@@ -832,7 +745,6 @@ class CoordsAnalysis(Analysis):
 
 
            for ax in axes.flatten()[:len(selected_models)]:
-                #ax.set_xlim(0, 99)
                 ax.set_xticks(tick_positions)
                 ax.set_xticklabels([str(t) for t in tick_positions])
 
@@ -847,8 +759,6 @@ class CoordsAnalysis(Analysis):
            fontsize=16,
            frameon=False
         )
-
-
 
         plt.tight_layout(rect=[0, 0.05, 1, 1])
         plt.show()
@@ -888,7 +798,5 @@ if __name__ == '__main__':
         runner = CellAnalysis(**common_kwargs)
     elif args.mode=='coords':
         runner = CoordsAnalysis(**common_kwargs)
-    else:
-        runner = PresenceAnalysis(**common_kwargs)
 
     runner.run()
