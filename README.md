@@ -59,7 +59,7 @@ Our results were created with the following prompt presets (found in `constructM
 To actually submit the batch to Anthropic/OpenAI:
 `python submitBatch.py -d x -m x`
 This will handle the creation of a job with the batching provider and save the appropriate log numbers for retrieval later.
-Similarly, for Llama, `python submitHPCBatch.py -d x -m x` will submit the batch to SLURM.
+Similarly, for Llama, `python submitHPCBatch.py -d x -m x` will submit the batch to SLURM. Users will need to provide their own appropriately set up SLURM script .sh file, as this will vary from system to system. Alternatively, the runLlama.py file can run the models locally if appropriate hardware is available.
 
 
 ## Checking on / Finishing a Batch
