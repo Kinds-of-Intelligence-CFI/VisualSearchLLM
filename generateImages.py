@@ -3,17 +3,85 @@ import random
 import csv
 import os
 import time
-
+import math 
 from PIL import Image, ImageDraw, ImageColor
 
+def draw_shaded_sphere(
+        diameter,
+        light_dir=(0, -1, 1),
+        inverted=False,
+        min_intensity=70,     # darkest grey you’ll allow   (0 = black)
+        max_intensity=190):   # brightest grey you’ll allow (255 = white)
+    """
+    Greyscale Lambertian sphere with compressed dynamic range.
+    """
+    # normalise light vector
+    lx, ly, lz = light_dir
+    mag = (lx*lx + ly*ly + lz*lz) ** 0.5
+    lx, ly, lz = lx/mag, ly/mag, lz/mag
+
+    from PIL import Image, ImageDraw
+    import math
+
+    img  = Image.new("RGBA", (diameter, diameter), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    r  = diameter / 2.0
+    cx = cy = r
+    rng = max_intensity - min_intensity          # span of allowed greys
+
+    for y in range(diameter):
+        dy = y + 0.5 - cy
+        for x in range(diameter):
+            dx = x + 0.5 - cx
+            d2 = dx*dx + dy*dy
+            if d2 > r*r:
+                continue                          # outside the circle
+            z  = (r*r - d2) ** 0.5               # surface-z
+            nx, ny, nz = dx/r, dy/r, z/r         # normal
+
+            dot = max(0.0, min(1.0, nx*lx + ny*ly + nz*lz))
+            intensity = int(min_intensity + rng * dot)
+
+            if inverted:
+                intensity = 255 - intensity
+
+            draw.point((x, y), fill=(intensity,)*3 + (255,))
+
+    return img
+
+def is_within_centre_distance(x, y, screen_center_x, screen_center_y, max_dist):
+    if max_dist is None:
+        return True
+    dx = x - screen_center_x
+    dy = y - screen_center_y
+    return (dx * dx + dy * dy) <= max_dist * max_dist
+
+def get_random_point_in_circle(center_x, center_y, radius):
+    # Generate random angle and radius (sqrt for uniform distribution)
+    theta = random.uniform(0, 2 * math.pi)
+    r = math.sqrt(random.uniform(0, 1)) * radius
+    
+    # Convert to cartesian coordinates
+    x = center_x + r * math.cos(theta)
+    y = center_y + r * math.sin(theta)
+    
+    return x, y
+
 def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorShape, 
-                    shapeSize, theta_min, theta_max, targetColour, distractorColour, conjunctive=False,
-                    grid_rows=2, grid_cols=2, targetSize=None, quadrantOrder=None, debug=False, present=False, colourMode="explicit", colourList=None):
+                    shapeSize, theta_min, theta_max, targetColour, distractorColour, bgColour="white", conjunctive=False,
+                    grid_rows=2, grid_cols=2, targetSize=None, quadrantOrder=None, debug=False, present=False, colourMode="explicit", colourList=None, 
+                    min_spacing=0, min_target_spacing=None, max_centre_dist=None):
+    # Default target spacing to min_spacing if user did not specify
+    if min_target_spacing is None:
+        min_target_spacing = min_spacing
+
     # Set image dimensions
     width, height = 400, 400  # You can adjust the size as needed
 
-
-
+    screen_center_x = width / 2
+    screen_center_y = height / 2
+    
     # Generate quadrants based on grid dimensions and quadrantOrder
     num_quadrants = grid_rows * grid_cols
 
@@ -65,23 +133,37 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                 currentTargetColour = chosenColor
                 currentDistractorColour = chosenColor
 
-
-
-
             if present:
                 targetPresent = (random.random()<0.5)
             else:
                 targetPresent = True
 
-
-
             # Randomly select k independently
             k = random.randint(min_k, max_k)
 
-
-
             # Create a new image with a white background
-            image = Image.new('RGBA', (width, height), 'white')
+            bg_rgb = ImageColor.getrgb(bgColour)
+            image = Image.new('RGBA', (width, height), bg_rgb)
+            
+            # Add mask if max_centre_dist is enabled
+            if max_centre_dist is not None:
+                # Create a black image
+                black_image = Image.new('RGBA', (width, height), (0, 0, 0, 255))  # Black background
+                
+                circle_rad = max_centre_dist + 20  # Add some padding to the circle
+                # Draw the allowed circular area in the original background color
+                draw = ImageDraw.Draw(black_image)
+                circle_bbox = [
+                    screen_center_x - circle_rad,
+                    screen_center_y - circle_rad,
+                    screen_center_x + circle_rad,
+                    screen_center_y + circle_rad
+                ]
+                draw.ellipse(circle_bbox, fill=bg_rgb)  # Fill with original background color
+                
+                # Replace the original image with our masked version
+                image = black_image
+
 
             # If debug is True, draw the grid lines
             if debug:
@@ -116,8 +198,27 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
 
                 # Random rotation angle for the target
                 target_rotation = random.uniform(theta_min, theta_max)
-                target_center_x = random.uniform(target_min_center_x, target_max_center_x)
-                target_center_y = random.uniform(target_min_center_y, target_max_center_y)
+                
+                
+                # Replace the random position generation for target
+                if max_centre_dist is not None:
+                    # Get random point within the allowed circle
+                    target_center_x, target_center_y = get_random_point_in_circle(
+                        screen_center_x, screen_center_y, max_centre_dist)
+                    
+                    # Ensure we don't go off the image edges
+                    target_center_x = min(max(target_center_x, targetCanvasSize/2), 
+                                        width - targetCanvasSize/2)
+                    target_center_y = min(max(target_center_y, targetCanvasSize/2), 
+                                        height - targetCanvasSize/2)
+                else:
+                    # Original code for when no max_centre_dist is specified
+                    target_center_x = random.uniform(target_min_center_x, target_max_center_x)
+                    target_center_y = random.uniform(target_min_center_y, target_max_center_y)
+
+
+
+
 
                 # Determine target color
                 if c == -1:
@@ -185,7 +286,8 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                     'type': targetShape,
                     'x': adjusted_target_x,
                     'y': adjusted_target_y,
-                    'size': targetCanvasSize  # Use canvas_size for width and height
+                    'size': targetCanvasSize,  # Use canvas_size for width and height
+                    'is_target': True
                 })
 
                 # Determine the quadrant for the target
@@ -252,7 +354,7 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
 
             # Generate k distractors
             for distractor_index in range(k):
-                max_attempts = 100  # Prevent infinite loops
+                max_attempts = 250  # Prevent infinite loops
                 attempt = 0
                 while attempt < max_attempts:
                     attempt += 1
@@ -268,8 +370,20 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                     min_center_x = canvas_size / 2
                     min_center_y = canvas_size / 2
 
-                    distractor_center_x = random.uniform(min_center_x, max_center_x)
-                    distractor_center_y = random.uniform(min_center_y, max_center_y)
+                    if max_centre_dist is not None:
+                        # Get random point within the allowed circle
+                        distractor_center_x, distractor_center_y = get_random_point_in_circle(
+                            screen_center_x, screen_center_y, max_centre_dist)
+                        
+                        # Ensure we don't go off the image edges
+                        distractor_center_x = min(max(distractor_center_x, canvas_size/2), 
+                                                width - canvas_size/2)
+                        distractor_center_y = min(max(distractor_center_y, canvas_size/2), 
+                                                height - canvas_size/2)
+                    else:
+                        # Original code for when no max_centre_dist is specified
+                        distractor_center_x = random.uniform(min_center_x, max_center_x)
+                        distractor_center_y = random.uniform(min_center_y, max_center_y)
 
 
                     if conjunctive:
@@ -348,12 +462,15 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                     distractor_center_x = adjusted_distractor_x + canvas_size / 2
                     distractor_center_y = adjusted_distractor_y + canvas_size / 2
 
-                    # Check for overlaps
+                    # Check for overlaps using appropriate spacing
                     overlap = False
                     for shape in occupied_areas:
+                        spacing = min_target_spacing if shape.get('is_target') else min_spacing
                         if bounding_boxes_overlap(
-                            shape['x'], shape['y'], shape['size'], shape['size'],
-                            adjusted_distractor_x, adjusted_distractor_y, canvas_size, canvas_size):
+                            shape['x'] - spacing/2, shape['y'] - spacing/2,
+                            shape['size'] + spacing, shape['size'] + spacing,
+                            adjusted_distractor_x - spacing/2, adjusted_distractor_y - spacing/2,
+                            canvas_size + spacing, canvas_size + spacing):
                             overlap = True
                             break
 
@@ -363,7 +480,8 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
                             'type': distractor_shape,
                             'x': adjusted_distractor_x,
                             'y': adjusted_distractor_y,
-                            'size': canvas_size  # Use canvas_size for width and height
+                            'size': canvas_size,  # Use canvas_size for width and height
+                            'is_target': False
                         })
                         break  # Move to next distractor
                     else:
@@ -447,7 +565,26 @@ def draw_shape(canvas_size, shapeSize, shape, color):
     shape_image = Image.new('RGBA', (int(canvas_size), int(canvas_size)), (0, 0, 0, 0))
     half_canvas_size = canvas_size / 2
 
-    if shape == 'circle':
+    if shape == 'shaded_sphere_below':
+         # Treat shapeSize as the sphere’s diameter in pixels
+         diameter = int(shapeSize)
+         # Draw sphere lit from below (flip Y component to +1)
+         sphere_img = draw_shaded_sphere(diameter, light_dir=(0, 2.5, 1))
+         # Center it inside canvas_size×canvas_size
+         offset = int((canvas_size - diameter) / 2)
+         shape_image.paste(sphere_img, (offset, offset), sphere_img)
+
+    elif shape == 'shaded_sphere':
+            # shapeSize is intended to be the diameter of the sphere.
+            diameter = int(shapeSize)
+            # Draw the sphere (returns a diameter×diameter RGBA image on transparent BG)
+            sphere_img = draw_shaded_sphere(diameter, light_dir=(0, -2.5, 1))
+            # Center it within the canvas_size×canvas_size “shape_image”
+            offset = int((canvas_size - diameter) / 2)
+            shape_image.paste(sphere_img, (offset, offset), sphere_img)
+            
+
+    elif shape == 'circle':
         # Draw a regular circle
         radius = shapeSize * 0.9 / 2
         left_up_point = (half_canvas_size - radius, half_canvas_size - radius)
@@ -620,6 +757,9 @@ if __name__ == '__main__':
     parser.add_argument("-ts", "--targetSize", type=int, default=None,
                     help="Override target size for target shape (if not provided, uses shapeSize)")
 
+    parser.add_argument("--bgColour", default="white",
+                        help="Background colour for the generated images (e.g. '#FFEECC' or 'black')")
+
 
     parser.add_argument("-q", "--quadrants", type=str, default=None, help="Specify rows,cols")
     parser.add_argument("-qo", "--quadrantOrder", type=str, default=None, help="Comma-separated list of quadrant integers")
@@ -628,12 +768,18 @@ if __name__ == '__main__':
     parser.add_argument("--conjunctive", action="store_true", help="Allow distractors to share target’s shape or color")
     parser.add_argument("--seed", type=int, default=int(time.time()), help="Random seed (default: current time)")
     
-    # New colour mode options:
     parser.add_argument("--colourMode", type=str, default="explicit",
                         choices=["explicit", "randomDifferent", "randomSame"],
                         help="Colour selection mode")
     parser.add_argument("--colourList", type=str, default=None,
                         help="Comma-separated list of hex colours for random colour modes")
+    parser.add_argument("--min_spacing", type=int, default=None,
+                    help="Minimum spacing (pixels) enforced between distractors")
+    parser.add_argument("--min_target_spacing", type=int, default=None,
+                    help="Minimum spacing (pixels) enforced between target and distractors")
+    parser.add_argument("--max_centre_dist", type=int, default=None,
+                    help="Maximum distance allowed from screen center for object centers (in pixels)")
+
 
     args = parser.parse_args()
 
@@ -1001,7 +1147,7 @@ if __name__ == '__main__':
         "VerticalGradient": {
             "num_images": args.number if args.number is not None else 1000,
             "min_k": 0,
-            "max_k": 49,
+            "max_k": 25,
             "c": 0,
             "targetShape": "circle_gradient_top_bottom",
             "distractorShape": "circle_gradient_bottom_top",
@@ -1018,7 +1164,7 @@ if __name__ == '__main__':
         "VerticalGradientReversed": {
             "num_images": args.number if args.number is not None else 1000,
             "min_k": 0,
-            "max_k": 49,
+            "max_k": 25,
             "c": 0,
             "targetShape": "circle_gradient_bottom_top",
             "distractorShape": "circle_gradient_top_bottom",
@@ -1035,7 +1181,7 @@ if __name__ == '__main__':
         "HorizontalGradient": {
             "num_images": args.number if args.number is not None else 1000,
             "min_k": 0,
-            "max_k": 49,
+            "max_k": 25,
             "c": 0,
             "targetShape": "circle_gradient_top_bottom",
             "distractorShape": "circle_gradient_bottom_top",
@@ -1052,7 +1198,7 @@ if __name__ == '__main__':
         "HorizontalGradientReversed": {
             "num_images": args.number if args.number is not None else 1000,
             "min_k": 0,
-            "max_k": 49,
+            "max_k": 25,
             "c": 0,
             "targetShape": "circle_gradient_bottom_top",
             "distractorShape": "circle_gradient_top_bottom",
@@ -1181,12 +1327,95 @@ if __name__ == '__main__':
             "colourMode": "randomSame",
             "colourList": ["#FF0000", "#00FF00", "#0000FF"]
         },
+
+        "LitSpheresBottom": {
+            "num_images": 1000,
+            "min_k": 0,
+            "max_k": 25,
+            "c": 1,
+            "targetShape": "shaded_sphere",
+            "distractorShape": "shaded_sphere_below",
+            "shapeSize": 30,           # Each sphere will be a 40×40 Lambertian circle
+            "theta_min": 0,
+            "theta_max": 0,
+            "targetColour": "#00FF00", # Ignored by shaded_sphere
+            "distractorColour": "#0000FF", # Ignored by shaded_sphere
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+            "bgColour":"#A7A7A7",
+            "min_spacing": 10,
+            "min_target_spacing": 30
+        },
+        "LitSpheresTop": {
+            "num_images": 1000,
+            "min_k": 0,
+            "max_k": 25,
+            "c": 1,
+            "targetShape": "shaded_sphere",
+            "distractorShape": "shaded_sphere_below",
+            "shapeSize": 30,           # Each sphere will be a 40×40 Lambertian circle
+            "theta_min": 180,
+            "theta_max": 180,
+            "targetColour": "#00FF00", # Ignored by shaded_sphere
+            "distractorColour": "#0000FF", # Ignored by shaded_sphere
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+            "bgColour":"#A7A7A7",
+            "min_spacing": 10,
+            "min_target_spacing": 30
+        },
+         "LitSpheresRight": {
+            "num_images": 1000,
+            "min_k": 0,
+            "max_k": 25,
+            "c": 1,
+            "targetShape": "shaded_sphere",
+            "distractorShape": "shaded_sphere_below",
+            "shapeSize": 30,           
+            "theta_min": 90,
+            "theta_max": 90,
+            "targetColour": "#00FF00", # Ignored by shaded_sphere
+            "distractorColour": "#0000FF", # Ignored by shaded_sphere
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+            "bgColour":"#797979",
+            "min_spacing": 10,
+            "min_target_spacing": 30
+        },
+         "LitSpheresLeft": {
+            "num_images": 1000,
+            "min_k": 0,
+            "max_k": 25,
+            "c": 1,
+            "targetShape": "shaded_sphere",
+            "distractorShape": "shaded_sphere_below",
+            "shapeSize": 30,           
+            "theta_min": 270,
+            "theta_max": 270,
+            "targetColour": "#00FF00", # Ignored by shaded_sphere
+            "distractorColour": "#0000FF", # Ignored by shaded_sphere
+            "quadrantOrder": [1, 2, 3, 4],
+            "debug": False,
+            "present": False,
+            "conjunctive": False,
+            "bgColour":"#A7A7A7",
+            "min_spacing": 10,
+            "min_target_spacing": 30
+        },
+
     }
     
     # If a preset is specified and exists, start with that configuration.
     # Otherwise, use a default configuration based on the flags.
     if args.preset and args.preset in presets:
             config = presets[args.preset].copy()
+            print(config )
     else:
         config = {
             "num_images": args.number if args.number is not None else 1000,
@@ -1206,7 +1435,13 @@ if __name__ == '__main__':
             "present": args.present,
             "conjunctive": args.conjunctive,
             "colourMode": args.colourMode if args.colourMode is not None else "explicit",
-            "colourList": args.colourList if args.colourList is not None else None
+            "colourList": args.colourList if args.colourList is not None else None,
+            "bgColour": args.bgColour if args.bgColour is not None else "white",
+            "min_spacing": args.min_spacing if args.min_spacing is not None else 0,
+            "min_target_spacing": (args.min_target_spacing if args.min_target_spacing is not None else
+                                    (args.min_spacing if args.min_spacing is not None else 0)),
+            "max_centre_dist": args.max_centre_dist if args.max_centre_dist is not None else None,
+
         }
 
     # Override preset values with any command-line flags (if not None):
@@ -1240,6 +1475,14 @@ if __name__ == '__main__':
     if args.colourMode != "explicit":
         overrides["colourMode"]=args.colourMode
         overrides["colourList"]=[c.strip() for c in args.colourList.split(",")]
+    if args.bgColour != "white":
+        overrides["bgColour"] = args.bgColour
+    if args.min_spacing is not None:
+        overrides["min_spacing"] = args.min_spacing
+    if args.min_target_spacing is not None:
+        overrides["min_target_spacing"] = args.min_target_spacing
+    if args.max_centre_dist is not None:
+        overrides["max_centre_dist"] = args.max_centre_dist
     #overrides["seed"] = args.seed
     for key, value in overrides.items():
         if value is not None:
