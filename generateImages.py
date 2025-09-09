@@ -766,7 +766,7 @@ if __name__ == '__main__':
     parser.add_argument("-p", "--preset", default=None)
     parser.add_argument("-f", "--finetuning", action="store_true")
     parser.add_argument("--conjunctive", action="store_true", help="Allow distractors to share target’s shape or color")
-    parser.add_argument("--seed", type=int, default=int(time.time()), help="Random seed (default: current time)")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
     
     parser.add_argument("--colourMode", type=str, default="explicit",
                         choices=["explicit", "randomDifferent", "randomSame"],
