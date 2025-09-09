@@ -144,13 +144,19 @@ class CellAnalysis(Analysis):
                     'colour': 'Efficient disjunctive',
                     'conjunctive': 'Conjunctive'
                 })
+
                 bin_edges = [1, 5, 9, 17, 33, 65, 100]
                 bin_labels = ['1–4','5–8','9–16','17–32','33–64','65–99']
 
             elif self.experiment == "LightPriors":
+
                 condition = "light_direction"
+                df=df[(df["light_direction"]=="bottom") | (df["light_direction"]=="left")]
+
+                df["light_direction"] = df["light_direction"].replace({"left": "Target Lit From Left", "bottom": "Target Lit From Bottom"})
+                print(df[condition])
                 bin_edges = [1, 5, 9, 13, 17, 21, 25, 33, 50]
-                bin_labels = ['1–4','5–8','9–12','13–16','17–20','21–24','25-32','33-49']
+                bin_labels = ['1–4','5–8','9–12','13–16','17–20','21–24','25-28','33-50']
             elif self.experiment == "CircleSizes":
                 condition = "target_size"
                 bin_edges = [1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 50]
@@ -353,7 +359,7 @@ class CellAnalysis(Analysis):
             binLabels = ['1–4','5–8','9–16','17–32','33–64','65–99'] 
         elif self.experiment=="LightPriors":
             edges = np.array([1, 5, 9, 13, 17, 21, 25, 33, 50])
-            binLabels = ['1–4','5–8','9–12','13–16','17–20','21–24','25-32','33-49']
+            binLabels = ['1–4','5–8','9–12','13–16','17–20','21–24','25-32','33-50']
         elif self.experiment== "CircleSizes":
             edges = np.array([1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 50])
             binLabels=['1–4','5–8','9–12','13–16','17–20','21–24','25-28','29-32','33-36','37-40','41-44','45-49']
@@ -466,10 +472,12 @@ class CellAnalysis(Analysis):
             ax.set_ylim(0,1)
             #tick_positions = [0, 20, 40, 60, 80, 99]
             
-            if self.experiment == "LightPriors" or self.experiment == "CircleSizes":
+            if  self.experiment == "CircleSizes":
                 tick_positions = [0,10,20,30,40,49]
             elif self.experiment == "2Among5":
                 tick_positions = [0,20,40,60,80,99]
+            elif self.experiment == "LightPriors":
+                tick_positions = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
             else:
                 tick_positions = [0, 20, 40, 60, 80, 99]
             for ax in axes.flatten()[:len(selected_models)]:

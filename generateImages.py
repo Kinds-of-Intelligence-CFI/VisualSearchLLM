@@ -354,7 +354,7 @@ def generate_images(dir, num_images, min_k, max_k, c, targetShape, distractorSha
 
             # Generate k distractors
             for distractor_index in range(k):
-                max_attempts = 250  # Prevent infinite loops
+                max_attempts = 1000  # Prevent infinite loops
                 attempt = 0
                 while attempt < max_attempts:
                     attempt += 1
@@ -1331,7 +1331,7 @@ if __name__ == '__main__':
         "LitSpheresBottom": {
             "num_images": 1000,
             "min_k": 0,
-            "max_k": 25,
+            "max_k": 17,
             "c": 1,
             "targetShape": "shaded_sphere",
             "distractorShape": "shaded_sphere_below",
@@ -1344,14 +1344,14 @@ if __name__ == '__main__':
             "debug": False,
             "present": False,
             "conjunctive": False,
-            "bgColour":"#A7A7A7",
-            "min_spacing": 10,
-            "min_target_spacing": 30
+            "bgColour":"#797979",
+            "min_spacing": 20,
+            "min_target_spacing": 20
         },
         "LitSpheresTop": {
             "num_images": 1000,
             "min_k": 0,
-            "max_k": 25,
+            "max_k": 17,
             "c": 1,
             "targetShape": "shaded_sphere",
             "distractorShape": "shaded_sphere_below",
@@ -1364,14 +1364,14 @@ if __name__ == '__main__':
             "debug": False,
             "present": False,
             "conjunctive": False,
-            "bgColour":"#A7A7A7",
-            "min_spacing": 10,
-            "min_target_spacing": 30
+            "bgColour":"#797979",
+            "min_spacing": 20,
+            "min_target_spacing": 20
         },
          "LitSpheresRight": {
             "num_images": 1000,
             "min_k": 0,
-            "max_k": 25,
+            "max_k": 17,
             "c": 1,
             "targetShape": "shaded_sphere",
             "distractorShape": "shaded_sphere_below",
@@ -1385,13 +1385,13 @@ if __name__ == '__main__':
             "present": False,
             "conjunctive": False,
             "bgColour":"#797979",
-            "min_spacing": 10,
-            "min_target_spacing": 30
+            "min_spacing": 20,
+            "min_target_spacing": 20
         },
          "LitSpheresLeft": {
             "num_images": 1000,
             "min_k": 0,
-            "max_k": 25,
+            "max_k": 17,
             "c": 1,
             "targetShape": "shaded_sphere",
             "distractorShape": "shaded_sphere_below",
@@ -1404,9 +1404,9 @@ if __name__ == '__main__':
             "debug": False,
             "present": False,
             "conjunctive": False,
-            "bgColour":"#A7A7A7",
-            "min_spacing": 10,
-            "min_target_spacing": 30
+            "bgColour":"#797979",
+            "min_spacing": 20,
+            "min_target_spacing": 20
         },
 
     }

@@ -1,7 +1,8 @@
-from openai import OpenAI
+from openai import OpenAI, AzureOpenAI
 import os
 import argparse
 import anthropic
+from together import Together
 import json
 
 
@@ -38,16 +39,21 @@ def extract_relevant_data(result):
 # Argument parser for directory
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--directory")
-parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "claude-sonnet37", "gpt-4-turbo", "claude-haiku"}, required=True)
+parser.add_argument("-m", "--model", choices={"gpt-4o", "claude-sonnet", "claude-sonnet37", "gpt-4-turbo", "claude-haiku", 
+                                              "deepseek-v3", "llama-3.3-70b", "qwen-2.5-72b", "llama-3.2-90b"}, required=True)
 args = parser.parse_args()
 
 directory="results/"+args.directory
+
+together_models = ["deepseek-v3", "llama-3.3-70b", "qwen-2.5-72b", "llama-3.2-90b"]
 
 # Initialize OpenAI client
 if args.model in ["gpt-4o", "gpt-4-turbo"]:
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 elif args.model in ["claude-sonnet", "claude-haiku", "claude-sonnet37"]:
     client = anthropic.Anthropic(api_key = os.getenv("ANTHROPIC_API_KEY"))
+elif args.model in together_models:
+    client = Together()
 else:
     raise ValueError("Invalid model type!")
 
@@ -82,6 +88,17 @@ for batch_id in batch_ids:
             print(f"Batch {batch_id} status: {batch_info.processing_status}")
             print(batch_info)
 
+    elif args.model in ["deepseek-v3", "llama-3.3-70b", "qwen-2.5-72b", "llama-3.2-90b"]:
+        batch_info = client.batches.get_batch(batch_id)
+        if batch_info.status != "COMPLETED":
+            print(f"Batch {batch_id} is still in progress: Status {batch_info}")
+            all_batches_completed = False
+        elif batch_info.status == "COMPLETED":
+            print(f"Batch {batch_id} is completed.")
+        else:
+            print(f"Batch {batch_id} status: {batch_info.status}")
+            print(batch_info)
+
 if not all_batches_completed:
     print("Not all batches are completed. Exiting the program.")
     exit(1)
@@ -111,6 +128,22 @@ with open(output_file_path, "w", encoding="utf-8") as combined_file:
                 json_string = json.dumps(serialized_result, indent=None)
                # Write the JSON string to the file, followed by a newline
                 combined_file.write(json_string + '\n')
+
+        elif args.model in together_models:
+            batch_info = client.batches.get_batch(batch_id)
+            
+            file_response = client.files.retrieve_content(id=batch_info.output_file_id, output=output_file_path)
+            print(file_response)
+            # Read the content and append to combined file
+            #with open(temp_file, 'r', encoding='utf-8') as temp:
+            #    output_content = temp.read()
+            #    combined_file.write(output_content)
+            #    if not output_content.endswith('\n'):
+            #        combined_file.write('\n')
+            
+            # Clean up temp file
+            #os.remove(temp_file)
+            print(f"Results from batch {batch_id} appended to {output_file_path}")
 
     print(f"All batch results combined into '{output_file_path}'.")
 

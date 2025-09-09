@@ -18,6 +18,12 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
 
     claude_models = ["claude-sonnet", "claude-sonnet37", "claude-haiku"]
     gpt_models = ["gpt-4o", "gpt-4-turbo"]
+    fireworks_models = [
+    "qwen-vl-32b",
+    "deepseek-vl2",
+    "llama-vision-11b",
+    "llama-vision-34b",
+    ]
 
 
     # Read the annotations
@@ -119,6 +125,8 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
                 response_data = response_entry.get("result")
             elif model in {"llama11B", "llama90B"}:
                 response_data = response_entry.get("content")
+            elif model in fireworks_models:
+                response_data = response_entry.get("response")
             else:
                 response_data = None
 
@@ -170,7 +178,7 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
                         assistant_message = response_data['body']['choices'][0]['message']['content'].strip()
                     elif model in claude_models:
                         assistant_message = response_data['message']['content'][0]["text"]
-                    elif model in {"llama11B", "llama90B"}:
+                    elif model in {"llama11B", "llama90B", *fireworks_models}:
                         assistant_message = response_data
                     else:
                         assistant_message = ""
@@ -401,7 +409,7 @@ def main():
     group.add_argument("-rc", "--rowsColumns", action='store_true', help="Rows and Columns mode")
     group.add_argument("-q", "--quadrants", action="store_true", help="Quadrant mode")
     group.add_argument("-p", "--presence", action="store_true", help="Presence mode")
-    parser.add_argument("-m", "--model", choices={"gpt-4o", "gpt-4-turbo", "claude-sonnet", "claude-sonnet37", "claude-haiku", "llama11B", "llama90B"}, required=True)
+    parser.add_argument("-m", "--model", choices={"gpt-4o", "gpt-4-turbo", "claude-sonnet", "claude-sonnet37", "claude-haiku", "llama11B", "llama90B", "qwen-vl-32b", "deepseek-vl2", "llama-vision-11b", "llama-vision-34b"}, required=True)
     args = parser.parse_args()
 
     mode_mapping = [
