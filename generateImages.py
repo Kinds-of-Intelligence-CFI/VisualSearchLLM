@@ -1346,7 +1346,8 @@ if __name__ == '__main__':
             "conjunctive": False,
             "bgColour":"#797979",
             "min_spacing": 20,
-            "min_target_spacing": 20
+            "min_target_spacing": 20,
+            "max_centre_dist": 180
         },
         "LitSpheresTop": {
             "num_images": 1000,
@@ -1366,7 +1367,8 @@ if __name__ == '__main__':
             "conjunctive": False,
             "bgColour":"#797979",
             "min_spacing": 20,
-            "min_target_spacing": 20
+            "min_target_spacing": 20,
+            "max_centre_dist": 180
         },
          "LitSpheresRight": {
             "num_images": 1000,
@@ -1386,7 +1388,8 @@ if __name__ == '__main__':
             "conjunctive": False,
             "bgColour":"#797979",
             "min_spacing": 20,
-            "min_target_spacing": 20
+            "min_target_spacing": 20,
+            "max_centre_dist": 180
         },
          "LitSpheresLeft": {
             "num_images": 1000,
@@ -1406,7 +1409,8 @@ if __name__ == '__main__':
             "conjunctive": False,
             "bgColour":"#797979",
             "min_spacing": 20,
-            "min_target_spacing": 20
+            "min_target_spacing": 20,
+            "max_centre_dist": 180
         },
 
     }
