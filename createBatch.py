@@ -20,7 +20,8 @@ def main():
     parser.add_argument("-f", "--finetuning", action='store_true', help="Create Finetuning batch")
     parser.add_argument("-m", "--model",
                         choices={"gpt-4o", "claude-sonnet", "llama11B", "llama90B",
-                                 "llamaLocal", "gpt-4-turbo", "claude-haiku", "claude-sonnet37"},
+                                 "llamaLocal", "gpt-4-turbo", "claude-haiku", "claude-sonnet37",
+                                 "deepseek-v3", "llama-3.3-70b", "qwen-2.5-72b", "llama-3.2-90b"},
                         required=True)
     parser.add_argument("-fmn", "--finetuned_model_name", default=None)
     args = parser.parse_args()
@@ -244,6 +245,30 @@ def main():
                     base64_image,
                     args.model
                 )
+            }
+        elif args.model in {"deepseek-v3", "llama-3.3-70b", "qwen-2.5-72b", "llama-3.2-90b"}:
+            # Together AI batch format
+            model_mapping = {
+                "deepseek-v3": "deepseek-ai/DeepSeek-V3",
+                "llama-3.3-70b": "meta-llama/Llama-3.3-70B-Instruct-Turbo", 
+                "qwen-2.5-72b": "Qwen/Qwen2.5-72B-Instruct-Turbo",
+                "llama-3.2-90b": "meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo"
+            }
+            batch_request = {
+                "custom_id": filename,
+                "body": {
+                    "model": model_mapping[args.model],
+                   # "messages": constructMessage(
+                    #    args.prompt,
+                     #   targetShape,
+                      #  targetColour,
+                       # base64_image,
+                        #args.model
+                   # ),
+                   "message": "Hello, how are you?",
+                    "max_tokens": 1000,
+                    "temperature": 0.0
+                }
             }
         else:
             raise ValueError(f"Unsupported model type: {args.model}")
