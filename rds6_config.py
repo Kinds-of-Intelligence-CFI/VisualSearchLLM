@@ -55,8 +55,16 @@ def get_image_path(experiment_name, image_name):
     return str(image_dir / image_name)
 
 def get_model_path(experiment_name, model_name):
-    """Get model file path."""
-    model_dir = Path(RDS6_DIRS["models"]) / experiment_name
+    """Get model file path.
+
+    If environment variable VSL_MODELS_DIR is set, write under that directory
+    instead of the default RDS6 models path. This enables local artifact storage.
+    """
+    override_root = os.environ.get("VSL_MODELS_DIR")
+    if override_root:
+        model_dir = Path(override_root) / experiment_name
+    else:
+        model_dir = Path(RDS6_DIRS["models"]) / experiment_name
     model_dir.mkdir(parents=True, exist_ok=True)
     return str(model_dir / model_name)
 

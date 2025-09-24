@@ -284,6 +284,38 @@ def group_importance(model: L1LogisticProbe, index_map: List[Tuple[str, str, int
     return items
 
 
+def save_probe_artifacts(
+    exp_name: str,
+    model_name: str,
+    descriptor: str,
+    model: L1LogisticProbe,
+    metrics: Dict[str, Any],
+    index_map: List[Tuple[str, str, int]],
+    categories: List[str],
+    allowed_layers: Optional[Set[str]] = None,
+) -> str:
+    """Save full probe weights and metadata for attribution.
+
+    Returns the absolute path to the saved artifact (.pt).
+    """
+    artifact_name = f"{model_name}_probe_{descriptor}.pt"
+    out_path = Path(get_model_path(exp_name, artifact_name))
+    payload: Dict[str, Any] = {
+        "probe_type": "linear_l1",
+        "state_dict": model.state_dict(),
+        "bias": float(model.linear.bias.detach().cpu().squeeze().item()),
+        "mean": torch.tensor(metrics.get("mean", [])).detach().cpu(),
+        "std": torch.tensor(metrics.get("std", [])).detach().cpu(),
+        "feature_dim": int(metrics.get("feature_dim", 0)),
+        "index_map": index_map,
+        "categories": categories,
+        "allowed_layers": sorted(list(allowed_layers)) if allowed_layers else None,
+        "metrics": metrics,
+    }
+    torch.save(payload, out_path)
+    return str(out_path)
+
+
 def stability_selection(
     examples: List[Dict[str, Any]],
     index_map: List[Tuple[str, str, int]],
@@ -322,8 +354,26 @@ def stability_selection(
     return out
 
 
-def save_report(exp_name: str, model_name: str, metrics: Dict[str, Any], features: List[Dict[str, Any]]) -> None:
-    report = {"model": model_name, "metrics": metrics, "top_features": features}
+def save_report(
+    exp_name: str,
+    model_name: str,
+    metrics: Dict[str, Any],
+    features: List[Dict[str, Any]],
+    group_importance_items: Optional[List[Dict[str, Any]]] = None,
+    stability_items: Optional[List[Dict[str, Any]]] = None,
+    artifact_path: Optional[str] = None,
+) -> None:
+    report = {
+        "model": model_name,
+        "metrics": metrics,
+        "top_features": features,
+    }
+    if group_importance_items is not None:
+        report["group_importance"] = group_importance_items
+    if stability_items is not None:
+        report["stability"] = stability_items
+    if artifact_path is not None:
+        report["artifact_path"] = artifact_path
     out_path = Path(get_model_path(exp_name, f"{model_name}_probe_report.json"))
     out_path.write_text(json.dumps(report, indent=2))
     print(f"✓ Wrote report: {out_path}")
@@ -486,6 +536,7 @@ def main():
     parser.add_argument("--l1", type=float, default=1e-4, help="L1 regularization strength")
     parser.add_argument("--per_layer", action="store_true", help="Train one probe per layer")
     parser.add_argument("--per_category", action="store_true", help="Train one probe per category")
+    parser.add_argument("--per_cat_layer", action="store_true", help="Train one probe per (category, layer) intersection")
     parser.add_argument("--stability", type=int, default=0, help="If >0, run stability selection with this many bootstraps")
     parser.add_argument("--battery", action="store_true", help="Run a full battery: combined, per-layer, per-category, joint")
     parser.add_argument("--l1_grid", nargs="*", type=float, default=[1e-3, 5e-4, 1e-4, 5e-5, 1e-5], help="Grid of L1 strengths")
@@ -508,10 +559,8 @@ def main():
             stab = stability_selection(examples, index_map, args.epochs, args.lr, best_l1, args.batch_size, device, bootstraps=args.stability) if args.stability > 0 else []
             metrics["groups_top10"] = groups[:10]
             print(f"val_accuracy={metrics['val_accuracy']:.3f}  best_l1={metrics.get('best_l1')}  features={len(index_map)}")
-            report = {"model": args.model, "metrics": metrics, "top_features": feats, "group_importance": groups, "stability": stab}
-            out_path = Path(get_model_path(exp, f"{args.model}_probe_report.json"))
-            out_path.write_text(json.dumps(report, indent=2))
-            print(f"✓ Wrote report: {out_path}")
+            artifact_path = save_probe_artifacts(exp, args.model, "combined", model, metrics, index_map, args.categories)
+            save_report(exp, args.model, metrics, feats, groups, stab, artifact_path)
 
             if args.nonlinear:
                 for variant in ("small", "tiny"):
@@ -531,7 +580,8 @@ def main():
                     feats_layer = top_features(m_layer, idx_map_layer, k=20)
                     groups_layer = group_importance(m_layer, idx_map_layer)
                     met_layer["best_l1"] = best_l1_layer
-                    rep_layer = {"model": args.model, "layer": layer_key, "metrics": met_layer, "top_features": feats_layer, "group_importance": groups_layer}
+                    artifact_layer = save_probe_artifacts(exp, args.model, f"layer_{layer_key}", m_layer, met_layer, idx_map_layer, args.categories, allowed_layers=allowed)
+                    rep_layer = {"model": args.model, "layer": layer_key, "metrics": met_layer, "top_features": feats_layer, "group_importance": groups_layer, "artifact_path": artifact_layer}
                     out_layer = Path(get_model_path(exp, f"{args.model}_probe_{layer_key}.json"))
                     out_layer.write_text(json.dumps(rep_layer, indent=2))
                     if args.nonlinear:
@@ -550,7 +600,8 @@ def main():
                     feats_cat = top_features(m_cat, idx_map_cat, k=20)
                     groups_cat = group_importance(m_cat, idx_map_cat)
                     met_cat["best_l1"] = best_l1_cat
-                    rep_cat = {"model": args.model, "category": cat, "metrics": met_cat, "top_features": feats_cat, "group_importance": groups_cat}
+                    artifact_cat = save_probe_artifacts(exp, args.model, f"cat_{cat}", m_cat, met_cat, idx_map_cat, [cat])
+                    rep_cat = {"model": args.model, "category": cat, "metrics": met_cat, "top_features": feats_cat, "group_importance": groups_cat, "artifact_path": artifact_cat}
                     out_cat = Path(get_model_path(exp, f"{args.model}_probe_{cat}.json"))
                     out_cat.write_text(json.dumps(rep_cat, indent=2))
                     if args.nonlinear:
@@ -559,6 +610,29 @@ def main():
                             rep_mlp_c = {"model": args.model, "category": cat, "metrics": met_mlp_c, "probe_type": met_mlp_c.get("probe_type")}
                             out_mlp_c = Path(get_model_path(exp, f"{args.model}_probe_{cat}_{met_mlp_c['probe_type']}.json"))
                             out_mlp_c.write_text(json.dumps(rep_mlp_c, indent=2))
+
+            if args.per_cat_layer:
+                layer_keys = get_layer_keys(exp, args.model, args.categories)
+                for cat in tqdm(args.categories, desc="Training per-(category,layer) probes: categories"):
+                    for layer_key in tqdm(layer_keys, desc=f"{cat}: layers", leave=False):
+                        allowed = {layer_key}
+                        ex_cl, idx_cl = load_examples_for_experiment(exp, args.model, [cat], allowed_layers=allowed)
+                        if not ex_cl:
+                            continue
+                        m_cl, met_cl, best_l1_cl = grid_search_probe(ex_cl, args.l1_grid or [args.l1], args.epochs, args.lr, args.batch_size, device)
+                        feats_cl = top_features(m_cl, idx_cl, k=20)
+                        groups_cl = group_importance(m_cl, idx_cl)
+                        met_cl["best_l1"] = best_l1_cl
+                        artifact_cl = save_probe_artifacts(exp, args.model, f"{cat}_{layer_key}", m_cl, met_cl, idx_cl, [cat], allowed_layers=allowed)
+                        rep_cl = {"model": args.model, "category": cat, "layer": layer_key, "metrics": met_cl, "top_features": feats_cl, "group_importance": groups_cl, "artifact_path": artifact_cl}
+                        out_cl = Path(get_model_path(exp, f"{args.model}_probe_{cat}_{layer_key}.json"))
+                        out_cl.write_text(json.dumps(rep_cl, indent=2))
+                        if args.nonlinear:
+                            for variant in ("small", "tiny"):
+                                m_mlp_cl, met_mlp_cl = train_probe_mlp(ex_cl, args.epochs, args.lr, args.batch_size, device, variant=variant)
+                                rep_mlp_cl = {"model": args.model, "category": cat, "layer": layer_key, "metrics": met_mlp_cl, "probe_type": met_mlp_cl.get("probe_type")}
+                                out_mlp_cl = Path(get_model_path(exp, f"{args.model}_probe_{cat}_{layer_key}_{met_mlp_cl['probe_type']}.json"))
+                                out_mlp_cl.write_text(json.dumps(rep_mlp_cl, indent=2))
 
         print("\n✅ Completed training probes for selected experiments.")
         return
@@ -573,7 +647,8 @@ def main():
             model_all, met_all, best_l1_all = grid_search_probe(ex_all, args.l1_grid, args.epochs, args.lr, args.batch_size, device)
             feats_all = top_features(model_all, idx_all, k=30)
             groups_all = group_importance(model_all, idx_all)
-            report_all = {"model": args.model, "metrics": met_all, "top_features": feats_all, "group_importance": groups_all}
+            artifact_all = save_probe_artifacts(exp, args.model, "combined", model_all, met_all, idx_all, args.categories)
+            report_all = {"model": args.model, "metrics": met_all, "top_features": feats_all, "group_importance": groups_all, "artifact_path": artifact_all}
             Path(get_model_path(exp, f"{args.model}_probe_report.json")).write_text(json.dumps(report_all, indent=2))
             summary_rows.append({
                 "experiment": exp, "test": "combined", "identifier": "all", "val_accuracy": met_all.get("val_accuracy"),
@@ -599,7 +674,8 @@ def main():
             m_layer, met_layer, best_l1_layer = grid_search_probe(ex_layer, args.l1_grid, args.epochs, args.lr, args.batch_size, device)
             feats_layer = top_features(m_layer, idx_layer, k=20)
             groups_layer = group_importance(m_layer, idx_layer)
-            rep_layer = {"model": args.model, "layer": layer_key, "metrics": met_layer, "top_features": feats_layer, "group_importance": groups_layer}
+            artifact_layer = save_probe_artifacts(exp, args.model, f"layer_{layer_key}", m_layer, met_layer, idx_layer, args.categories, allowed_layers={layer_key})
+            rep_layer = {"model": args.model, "layer": layer_key, "metrics": met_layer, "top_features": feats_layer, "group_importance": groups_layer, "artifact_path": artifact_layer}
             Path(get_model_path(exp, f"{args.model}_probe_{layer_key}.json")).write_text(json.dumps(rep_layer, indent=2))
             summary_rows.append({
                 "experiment": exp, "test": "per_layer", "identifier": layer_key, "val_accuracy": met_layer.get("val_accuracy"),
@@ -614,12 +690,38 @@ def main():
             m_cat, met_cat, best_l1_cat = grid_search_probe(ex_cat, args.l1_grid, args.epochs, args.lr, args.batch_size, device)
             feats_cat = top_features(m_cat, idx_cat, k=20)
             groups_cat = group_importance(m_cat, idx_cat)
-            rep_cat = {"model": args.model, "category": cat, "metrics": met_cat, "top_features": feats_cat, "group_importance": groups_cat}
+            artifact_cat = save_probe_artifacts(exp, args.model, f"cat_{cat}", m_cat, met_cat, idx_cat, [cat])
+            rep_cat = {"model": args.model, "category": cat, "metrics": met_cat, "top_features": feats_cat, "group_importance": groups_cat, "artifact_path": artifact_cat}
             Path(get_model_path(exp, f"{args.model}_probe_{cat}.json")).write_text(json.dumps(rep_cat, indent=2))
             summary_rows.append({
                 "experiment": exp, "test": "per_category", "identifier": cat, "val_accuracy": met_cat.get("val_accuracy"),
                 "num_train": met_cat.get("num_train"), "num_val": met_cat.get("num_val"), "feature_dim": met_cat.get("feature_dim"), "best_l1": best_l1_cat
             })
+
+        # Per (category, layer) intersection
+        if args.per_cat_layer:
+            layer_keys = get_layer_keys(exp, args.model, args.categories)
+            for cat in args.categories:
+                for layer_key in layer_keys:
+                    allowed = {layer_key}
+                    ex_cl, idx_cl = load_examples_for_experiment(exp, args.model, [cat], allowed_layers=allowed)
+                    if not ex_cl:
+                        continue
+                    m_cl, met_cl, best_l1_cl = grid_search_probe(ex_cl, args.l1_grid, args.epochs, args.lr, args.batch_size, device)
+                    feats_cl = top_features(m_cl, idx_cl, k=20)
+                    groups_cl = group_importance(m_cl, idx_cl)
+                    artifact_cl = save_probe_artifacts(exp, args.model, f"{cat}_{layer_key}", m_cl, met_cl, idx_cl, [cat], allowed_layers=allowed)
+                    rep_cl = {"model": args.model, "category": cat, "layer": layer_key, "metrics": met_cl, "top_features": feats_cl, "group_importance": groups_cl, "artifact_path": artifact_cl}
+                    Path(get_model_path(exp, f"{args.model}_probe_{cat}_{layer_key}.json")).write_text(json.dumps(rep_cl, indent=2))
+                    summary_rows.append({
+                        "experiment": exp, "test": "per_cat_layer", "identifier": f"{cat}:{layer_key}", "val_accuracy": met_cl.get("val_accuracy"),
+                        "num_train": met_cl.get("num_train"), "num_val": met_cl.get("num_val"), "feature_dim": met_cl.get("feature_dim"), "best_l1": best_l1_cl
+                    })
+                    if args.nonlinear:
+                        for variant in ("small", "tiny"):
+                            m_mlp_cl, met_mlp_cl = train_probe_mlp(ex_cl, args.epochs, args.lr, args.batch_size, device, variant=variant)
+                            rep_mlp_cl = {"model": args.model, "category": cat, "layer": layer_key, "metrics": met_mlp_cl, "probe_type": met_mlp_cl.get("probe_type")}
+                            Path(get_model_path(exp, f"{args.model}_probe_{cat}_{layer_key}_{met_mlp_cl['probe_type']}.json")).write_text(json.dumps(rep_mlp_cl, indent=2))
 
     # Joint probe across experiments (combined categories)
     joint_examples, joint_index = load_examples_for_experiments(args.experiments, args.model, args.categories)
@@ -627,7 +729,8 @@ def main():
         m_joint, met_joint, best_l1_joint = grid_search_probe(joint_examples, args.l1_grid, args.epochs, args.lr, args.batch_size, device)
         feats_joint = top_features(m_joint, joint_index, k=40)
         groups_joint = group_importance(m_joint, joint_index)
-        rep_joint = {"model": args.model, "experiments": args.experiments, "metrics": met_joint, "top_features": feats_joint, "group_importance": groups_joint}
+        artifact_joint = save_probe_artifacts("JOINT", args.model, "joint", m_joint, met_joint, joint_index, args.categories)
+        rep_joint = {"model": args.model, "experiments": args.experiments, "metrics": met_joint, "top_features": feats_joint, "group_importance": groups_joint, "artifact_path": artifact_joint}
         Path(get_model_path("JOINT", f"{args.model}_probe_joint.json")).write_text(json.dumps(rep_joint, indent=2))
         summary_rows.append({
             "experiment": "JOINT", "test": "combined", "identifier": "all", "val_accuracy": met_joint.get("val_accuracy"),
