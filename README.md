@@ -84,3 +84,6 @@ The script `processAllJobs.py` can let you select models to process batch result
 `python analyseResults.py -d <d1, d2, d3,d4...>, <l1,l2,l3,l4...> -g group1:d1,d2 group2:d3,d4 --mode m`
 where `<d1,...>` is list of directories which results you want to compare, `<l1,..>` is a list of labels, and `groupx: d1,d2` names a new group, groupx and merges d1 and d2's results into a single blob. 
 This is useful e.g., when wanting to merge 2Among5 and 5Among2.
+
+## Mechanistic Interpretability
+For analyzing internal model activations and training linear probes, use the scripts in the `scripts/` directory. The main workflow is: (1) extract activations during inference by setting `EXTRACT_ACTIVATIONS=1`, (2) train probes with `scripts/train_on_activations.py --experiments <exp1> <exp2> --model llama90B --categories residual_stream --test per_layer combined`, and (3) test hypotheses with `scripts/test_hypotheses.py --model llama90B`. Additional utilities include `scripts/probe_attribution.py` for computing feature importance, `scripts/inspect_activations.py` for examining saved activations, and `scripts/clutter_aware_popout.py` for analyzing the effect of clutter. For an automated pipeline on SLURM use `scripts/run_llama_local_pipeline.py --model llama90B --num 150 --experiments <exp1> <exp2>`. Configuration paths are set in `rds6_config.py`.
