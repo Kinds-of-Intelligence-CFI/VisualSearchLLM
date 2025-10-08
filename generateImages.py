@@ -1328,7 +1328,7 @@ if __name__ == '__main__':
             "colourList": ["#FF0000", "#00FF00", "#0000FF"]
         },
 
-        "LitSpheresBottom": {
+        "LitSpheresTop": {
             "num_images": 1000,
             "min_k": 0,
             "max_k": 17,
@@ -1349,7 +1349,7 @@ if __name__ == '__main__':
             "min_target_spacing": 20,
             "max_centre_dist": 180
         },
-        "LitSpheresTop": {
+        "LitSpheresBottom": {
             "num_images": 1000,
             "min_k": 0,
             "max_k": 17,
