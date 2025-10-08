@@ -1,9 +1,6 @@
 
 # VisualSearchLLM
 
-/rds-d6/user/mm2833/hpc-work/.local/bin/python3.13 submitHPCBatch.py -d test_activations -m llama90B
-
-
 This code is for investigating the pop-out effect in Visual AI systems.
 
 To run this code from scratch to replicate our results the following should be done:
