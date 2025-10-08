@@ -13,7 +13,7 @@ model = args.model
 directory = args.directory
 
 # Build a pattern to find all files with the format <model>Responses*.jsonl
-pattern = os.path.join("results/"+directory, f"{model}_responses*.jsonl")
+pattern = os.path.join("results/"+directory, f"responses*.jsonl")
 response_files = sorted(glob.glob(pattern))
 
 if not response_files:
@@ -30,4 +30,5 @@ with open(combined_filename, "w") as outfile:
                 outfile.write(line)
 
 print(f"Combined file created: {combined_filename}")
+
 
