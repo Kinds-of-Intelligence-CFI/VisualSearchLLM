@@ -38,8 +38,8 @@ Our results were created with the following prompt presets (found in `constructM
 
 | Cells | Presets to Use                          |
 |---------------------|------------------------------------------|
-| (2Among5) Inefficient Disjunctive <br> Efficient Disjunctive     | `std2x2-2Among5`<br> `std2x2-5Among2` |
-| (2Among5) Conjunctive | `std2x2-2Among5-conj` |
+| (2Among5)  Disjunctive <br> Shape Conjunctive     | `std2x2-2Among5`<br> `std2x2-5Among2` |
+| (2Among5) Shape-Colour Conjunctive | `std2x2-2Among5-conj` |
 | Light Priors  | `LightPriorsOOO` |
 | Circle Sizes  | `circle-sizes` |
 
@@ -47,8 +47,8 @@ Our results were created with the following prompt presets (found in `constructM
 
 | Coordinates | Presets to Use                          |
 |---------------------|------------------------------------------|
-| (2Among5) Inefficient Disjunctive <br> Efficient Disjunctive     | `coords-2Among5`<br> `coords-5Among2` |
-| (2Among5) Conjunctive | `coords-2Among5-conj` |
+| (2Among5)  Disjunctive <br> Shape Conjunctive    | `coords-2Among5`<br> `coords-5Among2` |
+| (2Among5) Shape-Colour Conjunctive | `coords-2Among5-conj` |
 | Light Priors  | `coords-LightPriorsOOO`|
 | Circle Sizes  | `coords-circle-sizes` |
 
