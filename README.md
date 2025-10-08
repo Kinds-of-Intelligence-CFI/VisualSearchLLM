@@ -26,7 +26,7 @@ Our results were created with n=10000 and we used the following presets:
 | Experiment Type     | Presets to Use                          |
 |---------------------|------------------------------------------|
 | 2Among5       | `2Among5ColourRand`<br>`2Among5NoColourRand`<br>`2Among5ConjRand`<br> `5Among2ColourRand`<br>`5Among2NoColourRand`<br>`5Among2ConjRand` |
-| Light Priors  | `VerticalGradient`<br>`VerticalGradientReversed`<br>`HorizontalGradient`<br>`HorizontalGradientReversed` |
+| Light Priors  | `LitSpheresTop`<br>`LitSpheresBottom`<br>`LitSpheresLeft`<br>`LitSpheresRight` |
 | Circle Sizes  | `CircleSizesSmall`<br>`CircleSizesMedium`<br>`CircleSizesLarge` |
 
 
@@ -43,7 +43,7 @@ Our results were created with the following prompt presets (found in `constructM
 |---------------------|------------------------------------------|
 | (2Among5) Inefficient Disjunctive <br> Efficient Disjunctive     | `std2x2-2Among5`<br> `std2x2-5Among2` |
 | (2Among5) Conjunctive | `std2x2-2Among5-conj` |
-| Light Priors  | `lightPriorsHorizontal`<br>`lightPriorsVertical`<br>`lightPriorsHorizontalReversed`<br>`lightPriorsVerticalReversed` |
+| Light Priors  | `LightPriorsOOO` |
 | Circle Sizes  | `circle-sizes` |
 
 
@@ -52,7 +52,7 @@ Our results were created with the following prompt presets (found in `constructM
 |---------------------|------------------------------------------|
 | (2Among5) Inefficient Disjunctive <br> Efficient Disjunctive     | `coords-2Among5`<br> `coords-5Among2` |
 | (2Among5) Conjunctive | `coords-2Among5-conj` |
-| Light Priors  | `coords-lightPriorsHorizontal`<br>`coords-lightPriorsVertical`<br>`coords-lightPriorsHorizontalReversed`<br>`coords-lightPriorsVerticalReversed`|
+| Light Priors  | `coords-LightPriorsOOO`|
 | Circle Sizes  | `coords-circle-sizes` |
 
 
