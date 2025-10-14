@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from matplotlib import rcParams
+from matplotlib.ticker import MultipleLocator, MaxNLocator
 
 import itertools
 
@@ -140,9 +141,9 @@ class CellAnalysis(Analysis):
             if self.experiment == "2Among5":
                 condition = "colour_type"
                 df['colour_type'] = df['colour_type'].replace({
-                    'no_colour': 'Inefficient disjunctive',
-                    'colour': 'Efficient disjunctive',
-                    'conjunctive': 'Conjunctive'
+                    'Inefficient disjunctive': 'Shape Conjunctive',
+                    'Efficient disjunctive': 'Disjunctive',
+                    'Conjunctive': 'Shape-Colour Conjunctive'
                 })
 
                 bin_edges = [1, 5, 9, 17, 33, 65, 100]
@@ -151,13 +152,16 @@ class CellAnalysis(Analysis):
             elif self.experiment == "LightPriors":
 
                 condition = "light_direction"
-                df=df[(df["light_direction"]=="bottom") | (df["light_direction"]=="left")]
+                
+                
 
-                df["light_direction"] = df["light_direction"].replace({"left": "Target Lit From Left", "bottom": "Target Lit From Bottom"})
-                print(df[condition])
-                bin_edges = [1, 5, 9, 13, 17, 21, 25, 33, 50]
-                bin_labels = ['1–4','5–8','9–12','13–16','17–20','21–24','25-28','33-50']
-            elif self.experiment == "CircleSizes":
+                #df=df[(df["light_direction"]=="bottom") | (df["light_direction"]=="left")]
+
+                df["light_direction"] = df["light_direction"].replace({"left": "Left", "bottom": "Bottom", "right": "Right", "top": "Top"})
+                #print(df[condition])
+                bin_edges = [1, 6, 11, 15, 18] 
+                bin_labels = ['1–5','6–10','11–14', '15–17']
+            elif self.experiment == "CircleSizes": 
                 condition = "target_size"
                 bin_edges = [1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 50]
                 bin_labels = ['1–4','5–8','9–12','13–16','17–20','21–24','25-28','29-32','33-36','37-40','41-44','45-49']
@@ -343,6 +347,13 @@ class CellAnalysis(Analysis):
             plt.ylabel('Accuracy')
             #plt.title(f'Model: {model}')
             plt.ylim(0,1)
+            ax = plt.gca()
+            kmin, kmax = int(grp_model['k'].min()), int(grp_model['k'].max())
+            # If the span is small, show every integer; otherwise, just ensure integers
+            if kmax - kmin <= 20:
+                ax.xaxis.set_major_locator(MultipleLocator(1))
+            else:
+                ax.xaxis.set_major_locator(MaxNLocator(integer=True))
             plt.legend(
                 loc='lower center',
                 bbox_to_anchor=(0.5, -0.25),
@@ -477,7 +488,7 @@ class CellAnalysis(Analysis):
             elif self.experiment == "2Among5":
                 tick_positions = [0,20,40,60,80,99]
             elif self.experiment == "LightPriors":
-                tick_positions = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
+                tick_positions = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
             else:
                 tick_positions = [0, 20, 40, 60, 80, 99]
             for ax in axes.flatten()[:len(selected_models)]:
@@ -682,6 +693,14 @@ class CoordsAnalysis(Analysis):
             plt.xlabel('Number of Distractors')
             plt.ylabel('Average Euclidean Error')
             plt.ylim(bottom=0)
+
+            ax = plt.gca()
+            dmin, dmax = int(grp_model['num_distractors'].min()), int(grp_model['num_distractors'].max())
+            if dmax - dmin <= 20:
+                ax.xaxis.set_major_locator(MultipleLocator(1))
+            else:
+                ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+
             plt.legend(
                 loc='lower center',
                 bbox_to_anchor=(0.5, -0.25),
@@ -746,15 +765,17 @@ class CoordsAnalysis(Analysis):
            if self.experiment == "2Among5":
                 tick_positions = [0, 20, 40, 60, 80, 99]
 
-           elif self.experiment in ["LightPriors", "CircleSizes"]:
+           elif self.experiment in ["CircleSizes"]:
                 tick_positions = [0,10,20,30,40,49]
+           elif self.experiment == "LightPriors":
+                tick_positions = [2,4,6,8,10,12,14,16]
            
 
 
 
            for ax in axes.flatten()[:len(selected_models)]:
                 ax.set_xticks(tick_positions)
-                ax.set_xticklabels([str(t) for t in tick_positions])
+                ax.set_xticklabels([str(t) for t in tick_positions], ha='right')
 
         # single legend below all three
         handles, labels = axes[0].get_legend_handles_labels()
