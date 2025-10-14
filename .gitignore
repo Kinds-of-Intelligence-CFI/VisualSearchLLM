@@ -1,6 +1,9 @@
 visualSearch
 __pycache__/
 *.png
+*jsonl
+batchid*
+
 logs/
 
 # Byte-compiled / optimized / DLL files
