@@ -21,7 +21,7 @@ def main():
     parser.add_argument("-m", "--model",
                         choices={"gpt-4o", "claude-sonnet", "llama11B", "llama90B",
                                  "llamaLocal", "gpt-4-turbo", "claude-haiku", "claude-sonnet37",
-                                 "deepseek-v3", "llama-3.3-70b", "qwen-2.5-72b", "llama-3.2-90b"},
+                                 "deepseek-v3", "llama-3.3-70b", "qwen-2.5-72b", "llama-3.2-90b", "Qwen7B", "Qwen32B", "Qwen72B"},
                         required=True)
     parser.add_argument("-fmn", "--finetuned_model_name", default=None)
     args = parser.parse_args()
@@ -74,6 +74,8 @@ def main():
         batch_limit = 2500
     elif args.model in ["claude-sonnet", "claude-sonnet37", "claude-haiku"]:
         batch_limit = 500
+    elif args.model in ["Qwen7B", "Qwen32B", "Qwen72B"]:
+        batch_limit = 50000
     else:
         batch_limit = 5000
 
@@ -235,7 +237,7 @@ def main():
                     )
                 }
             }
-        elif args.model in {"llama11B", "llama90B", "llamaLocal"}:
+        elif args.model in {"llama11B", "llama90B", "llamaLocal", "Qwen7B", "Qwen32B", "Qwen72B"}:
             batch_request = {
                 "custom_id": filename,
                 "messages": constructMessage(

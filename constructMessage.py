@@ -20,7 +20,7 @@ def constructMessage(writing, shape, colour, image, model, finetuning=False, sol
     claude_models = ["claude-sonnet", "claude-sonnet37", "claude-haiku"]
     together_models = ["deepseek-v3", "llama-3.3-70b", "qwen-2.5-72b", "llama-3.2-90b", "deepseek-vl2", "qwen-vl-32b", "qwen-vl-7b","llama-vision-11b", "llama-vision-34b", "internvl3-8b", "internvl3-38b"]
 
-    if model in gpt_models or "llama" in model:
+    if model in gpt_models or "llama" in model or "Qwen" in model:
         message.append({"role": "system", "content": "You are an AI assistant that can analyze images and answer questions about them."})
 
 
@@ -36,7 +36,7 @@ def constructMessage(writing, shape, colour, image, model, finetuning=False, sol
     content.append({"type": "text", "text": prompts[writing]})
 
 
-    if model in gpt_models or model=="llama11B" or model=="llama90B" or model in together_models:
+    if model in gpt_models or model=="llama11B" or model=="llama90B" or model in together_models or "Qwen" in model:
         content.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image}"}})
     elif model in claude_models:
         content.append({"type": "image", "source": {"type": "base64", "media_type":"image/png", "data":image}})
