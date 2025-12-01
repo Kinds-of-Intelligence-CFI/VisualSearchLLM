@@ -1,0 +1,304 @@
+Model: Qwen32B
+  Label=Circle Sizes Large  Total=10000  Invalid=12 (0.12%)  Acc=40.00%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.84      0.15      0.25      2497
+     Cell (1, 2)       0.43      0.08      0.13      2478
+     Cell (2, 1)       0.65      0.38      0.48      2498
+     Cell (2, 2)       0.33      0.98      0.49      2527
+    
+       micro avg       0.40      0.40      0.40     10000
+       macro avg       0.56      0.40      0.34     10000
+    weighted avg       0.56      0.40      0.34     10000
+  Predicted Proportions: Cell (1, 1)=4.3%  Cell (1, 2)=4.5%  Cell (2, 1)=14.7%  Cell (2, 2)=76.4%
+  Label=Circle Sizes Medium  Total=10000  Invalid=3 (0.03%)  Acc=27.43%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.56      0.04      0.07      2518
+     Cell (1, 2)       0.57      0.01      0.02      2478
+     Cell (2, 1)       0.43      0.09      0.15      2543
+     Cell (2, 2)       0.26      0.97      0.41      2461
+    
+       micro avg       0.27      0.27      0.27     10000
+       macro avg       0.46      0.28      0.16     10000
+    weighted avg       0.46      0.27      0.16     10000
+  Predicted Proportions: Cell (1, 1)=1.7%  Cell (1, 2)=0.4%  Cell (2, 1)=5.4%  Cell (2, 2)=92.4%
+  Label=Circle Sizes Small  Total=10000  Invalid=1 (0.01%)  Acc=27.43%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.52      0.04      0.07      2496
+     Cell (1, 2)       0.74      0.01      0.02      2513
+     Cell (2, 1)       0.38      0.07      0.12      2467
+     Cell (2, 2)       0.26      0.97      0.41      2524
+    
+       micro avg       0.27      0.27      0.27     10000
+       macro avg       0.48      0.27      0.16     10000
+    weighted avg       0.48      0.27      0.16     10000
+  Predicted Proportions: Cell (1, 1)=1.9%  Cell (1, 2)=0.4%  Cell (2, 1)=4.8%  Cell (2, 2)=93.0%
+
+Model: Qwen7B
+  Label=Circle Sizes Large  Total=10000  Invalid=2738 (27.38%)  Acc=18.00%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.47      0.37      0.41      2497
+     Cell (1, 2)       0.10      0.04      0.05      2478
+     Cell (2, 1)       0.37      0.06      0.10      2498
+     Cell (2, 2)       0.16      0.26      0.20      2527
+    
+       micro avg       0.25      0.18      0.21     10000
+       macro avg       0.27      0.18      0.19     10000
+    weighted avg       0.27      0.18      0.19     10000
+  Predicted Proportions: Cell (1, 1)=19.7%  Cell (1, 2)=9.0%  Cell (2, 1)=4.0%  Cell (2, 2)=39.9%
+  Label=Circle Sizes Medium  Total=10000  Invalid=334 (3.34%)  Acc=25.43%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.30      0.29      0.29      2518
+     Cell (1, 2)       0.21      0.12      0.16      2478
+     Cell (2, 1)       0.57      0.01      0.02      2543
+     Cell (2, 2)       0.26      0.60      0.36      2461
+    
+       micro avg       0.26      0.25      0.26     10000
+       macro avg       0.33      0.26      0.21     10000
+    weighted avg       0.34      0.25      0.21     10000
+  Predicted Proportions: Cell (1, 1)=24.0%  Cell (1, 2)=14.4%  Cell (2, 1)=0.5%  Cell (2, 2)=57.7%
+  Label=Circle Sizes Small  Total=10000  Invalid=216 (2.16%)  Acc=25.18%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.27      0.27      0.27      2496
+     Cell (1, 2)       0.25      0.14      0.18      2513
+     Cell (2, 1)       0.65      0.01      0.02      2467
+     Cell (2, 2)       0.25      0.58      0.35      2524
+    
+       micro avg       0.26      0.25      0.25     10000
+       macro avg       0.35      0.25      0.21     10000
+    weighted avg       0.35      0.25      0.21     10000
+  Predicted Proportions: Cell (1, 1)=25.7%  Cell (1, 2)=14.2%  Cell (2, 1)=0.5%  Cell (2, 2)=57.5%
+
+Model: claude-haiku
+  Label=Circle Sizes Large  Total=10000  Invalid=1318 (13.18%)  Acc=32.42%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.98      0.02      0.04      2497
+     Cell (1, 2)       0.41      0.01      0.03      2478
+     Cell (2, 1)       0.73      0.38      0.50      2498
+     Cell (2, 2)       0.30      0.87      0.45      2527
+    
+       micro avg       0.37      0.32      0.35     10000
+       macro avg       0.61      0.32      0.26     10000
+    weighted avg       0.61      0.32      0.26     10000
+  Predicted Proportions: Cell (1, 1)=0.6%  Cell (1, 2)=0.8%  Cell (2, 1)=13.1%  Cell (2, 2)=72.3%
+  Label=Circle Sizes Medium  Total=10000  Invalid=809 (8.09%)  Acc=23.89%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.93      0.01      0.02      2518
+     Cell (1, 2)       0.30      0.00      0.01      2478
+     Cell (2, 1)       0.57      0.05      0.08      2543
+     Cell (2, 2)       0.25      0.91      0.39      2461
+    
+       micro avg       0.26      0.24      0.25     10000
+       macro avg       0.51      0.24      0.13     10000
+    weighted avg       0.51      0.24      0.13     10000
+  Predicted Proportions: Cell (1, 1)=0.3%  Cell (1, 2)=0.3%  Cell (2, 1)=2.1%  Cell (2, 2)=89.3%
+  Label=Circle Sizes Small  Total=10000  Invalid=449 (4.49%)  Acc=25.04%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.81      0.01      0.02      2496
+     Cell (1, 2)       0.54      0.01      0.01      2513
+     Cell (2, 1)       0.47      0.03      0.05      2467
+     Cell (2, 2)       0.26      0.95      0.40      2524
+    
+       micro avg       0.26      0.25      0.26     10000
+       macro avg       0.52      0.25      0.12     10000
+    weighted avg       0.52      0.25      0.12     10000
+  Predicted Proportions: Cell (1, 1)=0.3%  Cell (1, 2)=0.3%  Cell (2, 1)=1.3%  Cell (2, 2)=93.6%
+
+Model: claude-sonnet
+  Label=Circle Sizes Large  Total=10000  Invalid=3 (0.03%)  Acc=60.01%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.81      0.27      0.41      2497
+     Cell (1, 2)       0.57      0.67      0.62      2478
+     Cell (2, 1)       0.50      0.93      0.65      2498
+     Cell (2, 2)       0.84      0.53      0.65      2527
+    
+       micro avg       0.60      0.60      0.60     10000
+       macro avg       0.68      0.60      0.58     10000
+    weighted avg       0.68      0.60      0.58     10000
+  Predicted Proportions: Cell (1, 1)=8.3%  Cell (1, 2)=28.9%  Cell (2, 1)=46.8%  Cell (2, 2)=15.9%
+  Label=Circle Sizes Medium  Total=10000  Invalid=4 (0.04%)  Acc=42.46%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.48      0.29      0.36      2518
+     Cell (1, 2)       0.50      0.27      0.35      2478
+     Cell (2, 1)       0.34      0.79      0.48      2543
+     Cell (2, 2)       0.68      0.34      0.45      2461
+    
+       micro avg       0.42      0.42      0.42     10000
+       macro avg       0.50      0.42      0.41     10000
+    weighted avg       0.50      0.42      0.41     10000
+  Predicted Proportions: Cell (1, 1)=15.1%  Cell (1, 2)=13.4%  Cell (2, 1)=59.0%  Cell (2, 2)=12.4%
+  Label=Circle Sizes Small  Total=10000  Invalid=0 (0.00%)  Acc=30.16%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.33      0.28      0.30      2496
+     Cell (1, 2)       0.36      0.13      0.19      2513
+     Cell (2, 1)       0.27      0.70      0.39      2467
+     Cell (2, 2)       0.42      0.10      0.17      2524
+    
+        accuracy                           0.30     10000
+       macro avg       0.35      0.30      0.26     10000
+    weighted avg       0.35      0.30      0.26     10000
+  Predicted Proportions: Cell (1, 1)=21.2%  Cell (1, 2)=9.0%  Cell (2, 1)=63.4%  Cell (2, 2)=6.3%
+
+Model: gpt-4-turbo
+  Label=Circle Sizes Large  Total=10000  Invalid=8 (0.08%)  Acc=42.65%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.70      0.25      0.37      2497
+     Cell (1, 2)       0.43      0.32      0.37      2478
+     Cell (2, 1)       0.52      0.33      0.40      2498
+     Cell (2, 2)       0.36      0.81      0.50      2527
+    
+       micro avg       0.43      0.43      0.43     10000
+       macro avg       0.50      0.43      0.41     10000
+    weighted avg       0.50      0.43      0.41     10000
+  Predicted Proportions: Cell (1, 1)=8.9%  Cell (1, 2)=18.1%  Cell (2, 1)=15.9%  Cell (2, 2)=57.0%
+  Label=Circle Sizes Medium  Total=10000  Invalid=2 (0.02%)  Acc=30.97%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.44      0.16      0.23      2518
+     Cell (1, 2)       0.37      0.18      0.24      2478
+     Cell (2, 1)       0.31      0.18      0.23      2543
+     Cell (2, 2)       0.28      0.74      0.41      2461
+    
+       micro avg       0.31      0.31      0.31     10000
+       macro avg       0.35      0.31      0.28     10000
+    weighted avg       0.35      0.31      0.28     10000
+  Predicted Proportions: Cell (1, 1)=9.0%  Cell (1, 2)=11.7%  Cell (2, 1)=14.7%  Cell (2, 2)=64.7%
+  Label=Circle Sizes Small  Total=10000  Invalid=1 (0.01%)  Acc=29.74%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.35      0.12      0.18      2496
+     Cell (1, 2)       0.35      0.16      0.22      2513
+     Cell (2, 1)       0.33      0.21      0.25      2467
+     Cell (2, 2)       0.27      0.70      0.39      2524
+    
+       micro avg       0.30      0.30      0.30     10000
+       macro avg       0.33      0.30      0.26     10000
+    weighted avg       0.32      0.30      0.26     10000
+  Predicted Proportions: Cell (1, 1)=8.6%  Cell (1, 2)=11.2%  Cell (2, 1)=15.5%  Cell (2, 2)=64.6%
+
+Model: gpt-4o
+  Label=Circle Sizes Large  Total=10000  Invalid=204 (2.04%)  Acc=83.15%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.93      0.74      0.82      2497
+     Cell (1, 2)       0.72      0.97      0.83      2478
+     Cell (2, 1)       0.90      0.85      0.88      2498
+     Cell (2, 2)       0.91      0.76      0.83      2527
+    
+       micro avg       0.85      0.83      0.84     10000
+       macro avg       0.87      0.83      0.84     10000
+    weighted avg       0.87      0.83      0.84     10000
+  Predicted Proportions: Cell (1, 1)=20.0%  Cell (1, 2)=33.3%  Cell (2, 1)=23.5%  Cell (2, 2)=21.2%
+  Label=Circle Sizes Medium  Total=10000  Invalid=214 (2.14%)  Acc=72.16%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.92      0.51      0.65      2518
+     Cell (1, 2)       0.68      0.73      0.70      2478
+     Cell (2, 1)       0.75      0.82      0.78      2543
+     Cell (2, 2)       0.69      0.83      0.76      2461
+    
+       micro avg       0.74      0.72      0.73     10000
+       macro avg       0.76      0.72      0.72     10000
+    weighted avg       0.76      0.72      0.72     10000
+  Predicted Proportions: Cell (1, 1)=13.8%  Cell (1, 2)=26.8%  Cell (2, 1)=27.7%  Cell (2, 2)=29.6%
+  Label=Circle Sizes Small  Total=10000  Invalid=278 (2.78%)  Acc=42.46%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.73      0.15      0.25      2496
+     Cell (1, 2)       0.58      0.20      0.30      2513
+     Cell (2, 1)       0.46      0.58      0.51      2467
+     Cell (2, 2)       0.37      0.76      0.50      2524
+    
+       micro avg       0.44      0.42      0.43     10000
+       macro avg       0.54      0.42      0.39     10000
+    weighted avg       0.53      0.42      0.39     10000
+  Predicted Proportions: Cell (1, 1)=5.2%  Cell (1, 2)=8.6%  Cell (2, 1)=31.4%  Cell (2, 2)=51.9%
+
+Model: llama11B
+  Label=Circle Sizes Large  Total=10000  Invalid=15 (0.15%)  Acc=26.80%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.35      0.15      0.21      2497
+     Cell (1, 2)       0.24      0.08      0.12      2478
+     Cell (2, 1)       0.26      0.42      0.32      2498
+     Cell (2, 2)       0.26      0.41      0.32      2527
+    
+       micro avg       0.27      0.27      0.27     10000
+       macro avg       0.28      0.27      0.24     10000
+    weighted avg       0.28      0.27      0.24     10000
+  Predicted Proportions: Cell (1, 1)=10.8%  Cell (1, 2)=8.7%  Cell (2, 1)=40.9%  Cell (2, 2)=39.4%
+  Label=Circle Sizes Medium  Total=10000  Invalid=6 (0.06%)  Acc=25.65%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.28      0.15      0.19      2518
+     Cell (1, 2)       0.26      0.10      0.14      2478
+     Cell (2, 1)       0.26      0.40      0.31      2543
+     Cell (2, 2)       0.25      0.37      0.30      2461
+    
+       micro avg       0.26      0.26      0.26     10000
+       macro avg       0.26      0.26      0.24     10000
+    weighted avg       0.26      0.26      0.24     10000
+  Predicted Proportions: Cell (1, 1)=13.7%  Cell (1, 2)=9.4%  Cell (2, 1)=40.0%  Cell (2, 2)=36.9%
+  Label=Circle Sizes Small  Total=10000  Invalid=12 (0.12%)  Acc=25.45%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.29      0.15      0.20      2496
+     Cell (1, 2)       0.24      0.09      0.14      2513
+     Cell (2, 1)       0.25      0.40      0.31      2467
+     Cell (2, 2)       0.25      0.37      0.30      2524
+    
+       micro avg       0.25      0.25      0.25     10000
+       macro avg       0.26      0.25      0.24     10000
+    weighted avg       0.26      0.25      0.24     10000
+  Predicted Proportions: Cell (1, 1)=13.0%  Cell (1, 2)=9.7%  Cell (2, 1)=40.5%  Cell (2, 2)=36.7%
+
+Model: llama90B
+  Label=Circle Sizes Large  Total=10000  Invalid=135 (1.35%)  Acc=46.51%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.51      0.75      0.61      2497
+     Cell (1, 2)       0.66      0.12      0.21      2478
+     Cell (2, 1)       0.35      0.42      0.39      2498
+     Cell (2, 2)       0.52      0.56      0.54      2527
+    
+       micro avg       0.47      0.47      0.47     10000
+       macro avg       0.51      0.46      0.43     10000
+    weighted avg       0.51      0.47      0.43     10000
+  Predicted Proportions: Cell (1, 1)=36.6%  Cell (1, 2)=4.6%  Cell (2, 1)=30.0%  Cell (2, 2)=27.4%
+  Label=Circle Sizes Medium  Total=10000  Invalid=121 (1.21%)  Acc=34.12%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.35      0.78      0.48      2518
+     Cell (1, 2)       0.54      0.14      0.22      2478
+     Cell (2, 1)       0.23      0.09      0.13      2543
+     Cell (2, 2)       0.33      0.35      0.34      2461
+    
+       micro avg       0.35      0.34      0.34     10000
+       macro avg       0.36      0.34      0.29     10000
+    weighted avg       0.36      0.34      0.29     10000
+  Predicted Proportions: Cell (1, 1)=56.4%  Cell (1, 2)=6.3%  Cell (2, 1)=9.7%  Cell (2, 2)=26.4%
+  Label=Circle Sizes Small  Total=10000  Invalid=122 (1.22%)  Acc=28.15%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.28      0.75      0.41      2496
+     Cell (1, 2)       0.35      0.08      0.13      2513
+     Cell (2, 1)       0.28      0.07      0.11      2467
+     Cell (2, 2)       0.28      0.22      0.25      2524
+    
+       micro avg       0.28      0.28      0.28     10000
+       macro avg       0.30      0.28      0.23     10000
+    weighted avg       0.30      0.28      0.23     10000
+  Predicted Proportions: Cell (1, 1)=66.3%  Cell (1, 2)=5.7%  Cell (2, 1)=6.4%  Cell (2, 2)=20.4%
+

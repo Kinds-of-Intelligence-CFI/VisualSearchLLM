@@ -1,0 +1,304 @@
+Model: Qwen32B
+  Label=Disjunctive  Total=20000  Invalid=426 (2.13%)  Acc=46.62%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.92      0.29      0.44      5060
+     Cell (1, 2)       0.75      0.31      0.44      5062
+     Cell (2, 1)       0.72      0.34      0.46      5062
+     Cell (2, 2)       0.34      0.95      0.50      4816
+    
+       micro avg       0.48      0.47      0.47     20000
+       macro avg       0.68      0.47      0.46     20000
+    weighted avg       0.69      0.47      0.46     20000
+  Predicted Proportions: Cell (1, 1)=8.0%  Cell (1, 2)=10.3%  Cell (2, 1)=11.9%  Cell (2, 2)=67.6%
+  Label=Shape Conjunctive  Total=20000  Invalid=197 (0.98%)  Acc=34.62%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.94      0.11      0.20      5022
+     Cell (1, 2)       0.72      0.15      0.25      5086
+     Cell (2, 1)       0.57      0.17      0.26      5002
+     Cell (2, 2)       0.28      0.97      0.44      4890
+    
+       micro avg       0.35      0.35      0.35     20000
+       macro avg       0.63      0.35      0.29     20000
+    weighted avg       0.63      0.35      0.29     20000
+  Predicted Proportions: Cell (1, 1)=3.0%  Cell (1, 2)=5.5%  Cell (2, 1)=7.4%  Cell (2, 2)=83.2%
+  Label=Shape-Colour Conjunctive  Total=10000  Invalid=50 (0.50%)  Acc=30.04%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.40      0.14      0.21      2523
+     Cell (1, 2)       0.34      0.21      0.26      2505
+     Cell (2, 1)       0.32      0.23      0.27      2520
+     Cell (2, 2)       0.27      0.63      0.38      2452
+    
+       micro avg       0.30      0.30      0.30     10000
+       macro avg       0.33      0.30      0.28     10000
+    weighted avg       0.33      0.30      0.28     10000
+  Predicted Proportions: Cell (1, 1)=9.0%  Cell (1, 2)=14.9%  Cell (2, 1)=18.4%  Cell (2, 2)=57.2%
+
+Model: Qwen7B
+  Label=Disjunctive  Total=20000  Invalid=9205 (46.02%)  Acc=18.02%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.65      0.23      0.34      5060
+     Cell (1, 2)       0.01      0.00      0.00      5062
+     Cell (2, 1)       0.44      0.41      0.43      5062
+     Cell (2, 2)       0.09      0.08      0.08      4816
+    
+       micro avg       0.33      0.18      0.23     20000
+       macro avg       0.30      0.18      0.21     20000
+    weighted avg       0.30      0.18      0.21     20000
+  Predicted Proportions: Cell (1, 1)=8.8%  Cell (1, 2)=1.6%  Cell (2, 1)=23.6%  Cell (2, 2)=19.9%
+  Label=Shape Conjunctive  Total=20000  Invalid=6720 (33.60%)  Acc=19.29%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.65      0.11      0.19      5022
+     Cell (1, 2)       0.03      0.00      0.00      5086
+     Cell (2, 1)       0.41      0.35      0.38      5002
+     Cell (2, 2)       0.19      0.31      0.24      4890
+    
+       micro avg       0.29      0.19      0.23     20000
+       macro avg       0.32      0.19      0.20     20000
+    weighted avg       0.32      0.19      0.20     20000
+  Predicted Proportions: Cell (1, 1)=4.3%  Cell (1, 2)=0.6%  Cell (2, 1)=21.6%  Cell (2, 2)=39.9%
+  Label=Shape-Colour Conjunctive  Total=10000  Invalid=1659 (16.59%)  Acc=21.39%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.44      0.09      0.15      2523
+     Cell (1, 2)       0.18      0.04      0.07      2505
+     Cell (2, 1)       0.28      0.14      0.19      2520
+     Cell (2, 2)       0.24      0.59      0.34      2452
+    
+       micro avg       0.26      0.21      0.23     10000
+       macro avg       0.28      0.22      0.19     10000
+    weighted avg       0.29      0.21      0.19     10000
+  Predicted Proportions: Cell (1, 1)=5.4%  Cell (1, 2)=5.7%  Cell (2, 1)=12.6%  Cell (2, 2)=59.7%
+
+Model: claude-haiku
+  Label=Disjunctive  Total=20000  Invalid=2857 (14.29%)  Acc=30.74%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       1.00      0.07      0.13      5060
+     Cell (1, 2)       0.46      0.09      0.14      5062
+     Cell (2, 1)       0.68      0.25      0.37      5062
+     Cell (2, 2)       0.29      0.85      0.44      4816
+    
+       micro avg       0.36      0.31      0.33     20000
+       macro avg       0.61      0.31      0.27     20000
+    weighted avg       0.61      0.31      0.27     20000
+  Predicted Proportions: Cell (1, 1)=1.7%  Cell (1, 2)=4.8%  Cell (2, 1)=9.4%  Cell (2, 2)=69.9%
+  Label=Shape Conjunctive  Total=20000  Invalid=1866 (9.33%)  Acc=27.39%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       1.00      0.03      0.05      5022
+     Cell (1, 2)       0.50      0.03      0.06      5086
+     Cell (2, 1)       0.68      0.18      0.28      5002
+     Cell (2, 2)       0.26      0.88      0.40      4890
+    
+       micro avg       0.30      0.27      0.29     20000
+       macro avg       0.61      0.28      0.20     20000
+    weighted avg       0.61      0.27      0.20     20000
+  Predicted Proportions: Cell (1, 1)=0.7%  Cell (1, 2)=1.6%  Cell (2, 1)=6.6%  Cell (2, 2)=81.8%
+  Label=Shape-Colour Conjunctive  Total=10000  Invalid=70 (0.70%)  Acc=26.40%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.90      0.01      0.03      2523
+     Cell (1, 2)       0.35      0.02      0.03      2505
+     Cell (2, 1)       0.50      0.06      0.11      2520
+     Cell (2, 2)       0.25      0.98      0.40      2452
+    
+       micro avg       0.27      0.26      0.26     10000
+       macro avg       0.50      0.27      0.14     10000
+    weighted avg       0.50      0.26      0.14     10000
+  Predicted Proportions: Cell (1, 1)=0.4%  Cell (1, 2)=1.1%  Cell (2, 1)=3.0%  Cell (2, 2)=94.7%
+
+Model: claude-sonnet
+  Label=Disjunctive  Total=20000  Invalid=4 (0.02%)  Acc=67.59%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.96      0.26      0.40      5060
+     Cell (1, 2)       0.61      0.75      0.68      5062
+     Cell (2, 1)       0.58      0.94      0.72      5062
+     Cell (2, 2)       0.85      0.76      0.80      4816
+    
+       micro avg       0.68      0.68      0.68     20000
+       macro avg       0.75      0.68      0.65     20000
+    weighted avg       0.75      0.68      0.65     20000
+  Predicted Proportions: Cell (1, 1)=6.8%  Cell (1, 2)=31.2%  Cell (2, 1)=40.5%  Cell (2, 2)=21.5%
+  Label=Shape Conjunctive  Total=20000  Invalid=107 (0.53%)  Acc=58.67%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.93      0.21      0.34      5022
+     Cell (1, 2)       0.59      0.58      0.58      5086
+     Cell (2, 1)       0.46      0.94      0.62      5002
+     Cell (2, 2)       0.84      0.63      0.72      4890
+    
+       micro avg       0.59      0.59      0.59     20000
+       macro avg       0.70      0.59      0.57     20000
+    weighted avg       0.70      0.59      0.56     20000
+  Predicted Proportions: Cell (1, 1)=5.7%  Cell (1, 2)=24.7%  Cell (2, 1)=50.6%  Cell (2, 2)=18.4%
+  Label=Shape-Colour Conjunctive  Total=10000  Invalid=107 (1.07%)  Acc=36.94%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.59      0.15      0.23      2523
+     Cell (1, 2)       0.46      0.27      0.34      2505
+     Cell (2, 1)       0.31      0.82      0.45      2520
+     Cell (2, 2)       0.49      0.23      0.31      2452
+    
+       micro avg       0.37      0.37      0.37     10000
+       macro avg       0.46      0.37      0.34     10000
+    weighted avg       0.46      0.37      0.34     10000
+  Predicted Proportions: Cell (1, 1)=6.2%  Cell (1, 2)=15.0%  Cell (2, 1)=66.2%  Cell (2, 2)=11.5%
+
+Model: gpt-4-turbo
+  Label=Disjunctive  Total=20000  Invalid=298 (1.49%)  Acc=56.96%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.93      0.20      0.32      5060
+     Cell (1, 2)       0.60      0.63      0.61      5062
+     Cell (2, 1)       0.75      0.54      0.63      5062
+     Cell (2, 2)       0.46      0.93      0.62      4816
+    
+       micro avg       0.58      0.57      0.57     20000
+       macro avg       0.69      0.57      0.55     20000
+    weighted avg       0.69      0.57      0.54     20000
+  Predicted Proportions: Cell (1, 1)=5.3%  Cell (1, 2)=26.9%  Cell (2, 1)=18.3%  Cell (2, 2)=48.0%
+  Label=Shape Conjunctive  Total=20000  Invalid=285 (1.43%)  Acc=41.23%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.88      0.11      0.19      5022
+     Cell (1, 2)       0.65      0.21      0.32      5086
+     Cell (2, 1)       0.56      0.47      0.51      5002
+     Cell (2, 2)       0.32      0.88      0.47      4890
+    
+       micro avg       0.42      0.41      0.42     20000
+       macro avg       0.60      0.42      0.37     20000
+    weighted avg       0.61      0.41      0.37     20000
+  Predicted Proportions: Cell (1, 1)=3.1%  Cell (1, 2)=8.1%  Cell (2, 1)=20.7%  Cell (2, 2)=66.7%
+  Label=Shape-Colour Conjunctive  Total=10000  Invalid=327 (3.27%)  Acc=30.51%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.71      0.06      0.10      2523
+     Cell (1, 2)       0.39      0.21      0.27      2505
+     Cell (2, 1)       0.30      0.60      0.40      2520
+     Cell (2, 2)       0.28      0.36      0.31      2452
+    
+       micro avg       0.32      0.31      0.31     10000
+       macro avg       0.42      0.31      0.27     10000
+    weighted avg       0.42      0.31      0.27     10000
+  Predicted Proportions: Cell (1, 1)=2.0%  Cell (1, 2)=13.3%  Cell (2, 1)=50.3%  Cell (2, 2)=31.1%
+
+Model: gpt-4o
+  Label=Disjunctive  Total=20000  Invalid=160 (0.80%)  Acc=84.67%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.89      0.78      0.83      5060
+     Cell (1, 2)       0.76      0.98      0.85      5062
+     Cell (2, 1)       0.90      0.82      0.86      5062
+     Cell (2, 2)       0.92      0.81      0.86      4816
+    
+       micro avg       0.85      0.85      0.85     20000
+       macro avg       0.87      0.85      0.85     20000
+    weighted avg       0.87      0.85      0.85     20000
+  Predicted Proportions: Cell (1, 1)=22.1%  Cell (1, 2)=32.9%  Cell (2, 1)=23.0%  Cell (2, 2)=21.2%
+  Label=Shape Conjunctive  Total=20000  Invalid=1160 (5.80%)  Acc=55.54%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.94      0.30      0.45      5022
+     Cell (1, 2)       0.58      0.70      0.64      5086
+     Cell (2, 1)       0.71      0.48      0.57      5002
+     Cell (2, 2)       0.47      0.75      0.58      4890
+    
+       micro avg       0.59      0.56      0.57     20000
+       macro avg       0.68      0.56      0.56     20000
+    weighted avg       0.68      0.56      0.56     20000
+  Predicted Proportions: Cell (1, 1)=8.0%  Cell (1, 2)=30.8%  Cell (2, 1)=16.8%  Cell (2, 2)=38.6%
+  Label=Shape-Colour Conjunctive  Total=10000  Invalid=115 (1.15%)  Acc=41.20%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.46      0.28      0.35      2523
+     Cell (1, 2)       0.34      0.74      0.47      2505
+     Cell (2, 1)       0.50      0.36      0.42      2520
+     Cell (2, 2)       0.56      0.27      0.36      2452
+    
+       micro avg       0.42      0.41      0.41     10000
+       macro avg       0.47      0.41      0.40     10000
+    weighted avg       0.47      0.41      0.40     10000
+  Predicted Proportions: Cell (1, 1)=15.6%  Cell (1, 2)=53.6%  Cell (2, 1)=18.1%  Cell (2, 2)=11.5%
+
+Model: llama11B
+  Label=Disjunctive  Total=20000  Invalid=1 (0.01%)  Acc=34.21%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.69      0.19      0.30      5060
+     Cell (1, 2)       0.27      0.11      0.16      5062
+     Cell (2, 1)       0.33      0.35      0.34      5062
+     Cell (2, 2)       0.32      0.73      0.44      4816
+    
+       micro avg       0.34      0.34      0.34     20000
+       macro avg       0.40      0.35      0.31     20000
+    weighted avg       0.40      0.34      0.31     20000
+  Predicted Proportions: Cell (1, 1)=7.0%  Cell (1, 2)=10.4%  Cell (2, 1)=27.1%  Cell (2, 2)=55.6%
+  Label=Shape Conjunctive  Total=20000  Invalid=6 (0.03%)  Acc=27.46%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.32      0.11      0.17      5022
+     Cell (1, 2)       0.28      0.20      0.23      5086
+     Cell (2, 1)       0.27      0.26      0.26      5002
+     Cell (2, 2)       0.27      0.53      0.36      4890
+    
+       micro avg       0.27      0.27      0.27     20000
+       macro avg       0.28      0.28      0.26     20000
+    weighted avg       0.28      0.27      0.25     20000
+  Predicted Proportions: Cell (1, 1)=9.0%  Cell (1, 2)=18.5%  Cell (2, 1)=24.1%  Cell (2, 2)=48.3%
+  Label=Shape-Colour Conjunctive  Total=10000  Invalid=43 (0.43%)  Acc=25.69%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.28      0.06      0.10      2523
+     Cell (1, 2)       0.26      0.10      0.14      2505
+     Cell (2, 1)       0.26      0.37      0.31      2520
+     Cell (2, 2)       0.25      0.50      0.34      2452
+    
+       micro avg       0.26      0.26      0.26     10000
+       macro avg       0.26      0.26      0.22     10000
+    weighted avg       0.26      0.26      0.22     10000
+  Predicted Proportions: Cell (1, 1)=5.4%  Cell (1, 2)=9.2%  Cell (2, 1)=36.1%  Cell (2, 2)=48.9%
+
+Model: llama90B
+  Label=Disjunctive  Total=20000  Invalid=13 (0.07%)  Acc=54.75%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.71      0.48      0.57      5060
+     Cell (1, 2)       0.48      0.21      0.29      5062
+     Cell (2, 1)       0.65      0.64      0.64      5062
+     Cell (2, 2)       0.45      0.88      0.60      4816
+    
+       micro avg       0.55      0.55      0.55     20000
+       macro avg       0.57      0.55      0.53     20000
+    weighted avg       0.57      0.55      0.52     20000
+  Predicted Proportions: Cell (1, 1)=17.3%  Cell (1, 2)=11.0%  Cell (2, 1)=24.9%  Cell (2, 2)=46.8%
+  Label=Shape Conjunctive  Total=20000  Invalid=1167 (5.83%)  Acc=41.24%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.79      0.28      0.42      5022
+     Cell (1, 2)       0.42      0.09      0.15      5086
+     Cell (2, 1)       0.52      0.47      0.50      5002
+     Cell (2, 2)       0.35      0.82      0.49      4890
+    
+       micro avg       0.44      0.41      0.42     20000
+       macro avg       0.52      0.42      0.39     20000
+    weighted avg       0.52      0.41      0.39     20000
+  Predicted Proportions: Cell (1, 1)=9.0%  Cell (1, 2)=5.5%  Cell (2, 1)=22.7%  Cell (2, 2)=56.9%
+  Label=Shape-Colour Conjunctive  Total=10000  Invalid=46 (0.46%)  Acc=30.44%
+                  precision    recall  f1-score   support
+    
+     Cell (1, 1)       0.33      0.44      0.38      2523
+     Cell (1, 2)       0.37      0.05      0.08      2505
+     Cell (2, 1)       0.28      0.27      0.28      2520
+     Cell (2, 2)       0.30      0.46      0.36      2452
+    
+       micro avg       0.31      0.30      0.31     10000
+       macro avg       0.32      0.31      0.27     10000
+    weighted avg       0.32      0.30      0.27     10000
+  Predicted Proportions: Cell (1, 1)=34.3%  Cell (1, 2)=3.3%  Cell (2, 1)=24.0%  Cell (2, 2)=38.0%
+
