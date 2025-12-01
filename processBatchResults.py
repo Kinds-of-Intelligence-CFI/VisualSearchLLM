@@ -23,6 +23,9 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
     "deepseek-vl2",
     "llama-vision-11b",
     "llama-vision-34b",
+    "Qwen7B",
+    "Qwen32B",
+    "Qwen72B",
     ]
 
 
@@ -126,7 +129,7 @@ def process_batch_responses(dataset_dir, annotations_file, results_file,
             elif model in {"llama11B", "llama90B"}:
                 response_data = response_entry.get("content")
             elif model in fireworks_models:
-                response_data = response_entry.get("response")
+                response_data = response_entry.get("response") or response_entry.get("content")
             else:
                 response_data = None
 
@@ -409,7 +412,8 @@ def main():
     group.add_argument("-rc", "--rowsColumns", action='store_true', help="Rows and Columns mode")
     group.add_argument("-q", "--quadrants", action="store_true", help="Quadrant mode")
     group.add_argument("-p", "--presence", action="store_true", help="Presence mode")
-    parser.add_argument("-m", "--model", choices={"gpt-4o", "gpt-4-turbo", "claude-sonnet", "claude-sonnet37", "claude-haiku", "llama11B", "llama90B", "qwen-vl-32b", "deepseek-vl2", "llama-vision-11b", "llama-vision-34b"}, required=True)
+    parser.add_argument("-m", "--model", choices={"gpt-4o", "gpt-4-turbo", "claude-sonnet", "claude-sonnet37", "claude-haiku", "llama11B", "llama90B", "qwen-vl-32b", "deepseek-vl2", "llama-vision-11b", "llama-vision-34b", "Qwen7B", "Qwen32B", "Qwen72B"}, required=True)
+    parser.add_argument("--exact_filename", action="store_true", help="Use the exact batch responses filename without prefixing model")
     args = parser.parse_args()
 
     mode_mapping = [
@@ -426,7 +430,7 @@ def main():
         dataset_dir=os.path.join("results", args.directory),
         annotations_file=args.annotations_file,
         results_file=f"{args.model}_results_{resultFileType}.csv",
-        batch_responses_file=f"{args.model}_{args.batch_responses}",
+        batch_responses_file=args.batch_responses if args.exact_filename else f"{args.model}_{args.batch_responses}",
         expect_coordinates=args.expect_coords,
         rows_and_columns=args.rowsColumns,
         presence=args.presence,

@@ -32,8 +32,11 @@ class Analysis:
         # Output directory
         if output_dir:
             self.output_dir = output_dir
-        elif save_figs and len(directories) == 1:
-            self.output_dir = os.path.join("results", directories[0])
+        elif save_figs:
+            if len(directories) == 1:
+                self.output_dir = os.path.join("results", directories[0])
+            else:
+                self.output_dir = os.path.join("results", "plots")
         else:
             self.output_dir = None
 
@@ -219,7 +222,7 @@ class CellAnalysis(Analysis):
         df['label'] = df['source_dir'].map(self.group_map).fillna(df['label'])
 
         # map numerical cells to human‐readable labels
-        unique = sorted(set(df['actual_cell_parsed']))
+        unique = sorted([x for x in set(df['actual_cell_parsed']) if x is not None])
         label_map = {c: f'Cell ({c[0]}, {c[1]})' for c in unique}
         df['actual_label']    = df['actual_cell_parsed'].map(label_map)
         df['predicted_label'] = df['predicted_cell_parsed'].map(lambda c: label_map.get(c, 'Invalid'))
@@ -271,21 +274,26 @@ class CellAnalysis(Analysis):
                 )
 
                 # classification report
-                classes = sorted(g['actual_label'].unique())
-                report = classification_report(
-                    g['actual_label'],
-                    g['predicted_label'],
-                    labels=classes,
-                    zero_division=0
-                )
+                classes = sorted(g['actual_label'].dropna().unique())
+                if not classes:
+                    lines.append("    No valid actual labels found.")
+                else:
+                    y_true = g['actual_label'].fillna('Unknown').astype(str)
+                    y_pred = g['predicted_label'].fillna('Unknown').astype(str)
+                    report = classification_report(
+                        y_true,
+                        y_pred,
+                        labels=[str(c) for c in classes],
+                        zero_division=0
+                    )
+                    for rpt_line in report.splitlines():
+                        lines.append(f"    {rpt_line}")
                 pred_counts = g['predicted_label'].value_counts(normalize=True)
                 pred_props = {label: pred_counts.get(label, 0) for label in classes}
                 pred_prop_line = "  Predicted Proportions: " + "  ".join(
                     f"{label}={prop*100:.1f}%" for label, prop in pred_props.items()
                 )
                 lines.append(pred_prop_line)
-                for rpt_line in report.splitlines():
-                    lines.append(f"    {rpt_line}")
             lines.append("")  # blank line between models
         text_output = "\n".join(lines) + "\n"
         metrics = {
@@ -362,6 +370,10 @@ class CellAnalysis(Analysis):
                 frameon=False
             )
             plt.tight_layout()
+            if self.save_figs and self.output_dir:
+                os.makedirs(self.output_dir, exist_ok=True)
+                fname = f'cell_accuracy_{model}.png'
+                plt.savefig(os.path.join(self.output_dir, fname))
             plt.show()
 
 
@@ -417,22 +429,28 @@ class CellAnalysis(Analysis):
                 frameon=False
             )
             plt.tight_layout()
+            if self.save_figs and self.output_dir:
+                os.makedirs(self.output_dir, exist_ok=True)
+                fname = f'cell_accuracy_binned_{model}.png'
+                plt.savefig(os.path.join(self.output_dir, fname))
             plt.show()
 
         ### 2x2 plot for paper
 
-        selected_models = ['gpt-4o', 'claude-sonnet', 'llama90B'] 
+        selected_models = ['gpt-4o', 'claude-sonnet', 'llama90B', 'Qwen7B', 'Qwen32B'] 
         modelTitleMap = {
             'gpt-4o': 'GPT-4o',
             'claude-sonnet': 'Claude Sonnet',
             'llama90B': 'Llama 90B',
+            'Qwen7B': 'Qwen 7B',
+            'Qwen32B': 'Qwen 32B',
         }
 
 
         # bump up font for paper
         plt.rcParams.update({'font.size': 18})
 
-        fig, axes = plt.subplots(2, 2, figsize=(16, 12), sharex=False, sharey=True)
+        fig, axes = plt.subplots(2, 3, figsize=(24, 12), sharex=False, sharey=True)
 
 
 
@@ -557,6 +575,10 @@ class CellAnalysis(Analysis):
 
         # now tighten the layout, leaving room at bottom for legend
         fig.tight_layout(rect=[0, 0.1, 1, 0.95])
+        if self.save_figs and self.output_dir:
+            os.makedirs(self.output_dir, exist_ok=True)
+            fname = f'cell_accuracy_combined.png'
+            plt.savefig(os.path.join(self.output_dir, fname))
         plt.show()
 
 class CoordsAnalysis(Analysis):
@@ -802,6 +824,8 @@ if __name__ == '__main__':
     p.add_argument("-e", "--experiment", choices=['2Among5', 'LightPriors', 'CircleSizes'], required=True)
     p.add_argument("--humanData", action='store_true')
     p.add_argument('-c','--confusion',action='store_true')
+    p.add_argument('-s', '--save', action='store_true', help='Save figures to disk')
+    p.add_argument('-o', '--output_dir', help='Directory to save results')
     args = p.parse_args()
 
 
@@ -811,7 +835,7 @@ if __name__ == '__main__':
 
 
     # determine save_figs
-    save_figs = len(args.directories)==1
+    save_figs = args.save or len(args.directories)==1
     common_kwargs = dict(
         directories=args.directories,
         labels=args.labels,
@@ -819,7 +843,7 @@ if __name__ == '__main__':
         save_figs=save_figs,
         confusion=args.confusion,
         experiment = args.experiment,
-
+        output_dir = args.output_dir,
     )
 
     if args.mode=='cell':

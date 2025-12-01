@@ -1,0 +1,13 @@
+2Among5-Dis-Cells,std2x2-2Among5
+2Among5-ShapeColourConj-Cells,std2x2-2Among5-conj
+2Among5-ShapeConj-Cells,std2x2-2Among5
+5Among2-Dis-Cells,std2x2-5Among2
+5Among2-ShapeColourConj-Cells,std2x2-5Among2-conj
+5Among2-ShapeConj-Cells,std2x2-5Among2
+CircleSizesLarge,circle-sizes
+CircleSizesMedium,circle-sizes
+CircleSizesSmall,circle-sizes
+LitSpheresBottom,LightPriorsOOO
+LitSpheresLeft,LightPriorsOOO
+LitSpheresRight,LightPriorsOOO
+LitSpheresTop,LightPriorsOOO
